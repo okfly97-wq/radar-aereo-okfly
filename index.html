@@ -90,7 +90,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 .aci{
   padding:8px 13px;border-bottom:1px solid rgba(0,180,255,.06);
   cursor:pointer;transition:background .15s;
-  display:grid;grid-template-columns:22px 1fr auto;gap:0 9px;align-items:center;
+  display:grid;grid-template-columns:22px 1fr;gap:0 9px;align-items:center;
 }
 .aci:hover{background:rgba(0,180,255,.08)}
 .aci.sel{background:rgba(0,212,255,.13);border-left:2px solid var(--cyan);padding-left:11px}
@@ -523,7 +523,9 @@ function buildPopup(d) {
   var alt = d.geo_altitude != null ? d.geo_altitude : d.baro_altitude;
   var altFt = alt != null ? Math.round(alt * 3.281).toLocaleString() + ' ft' : 'N/A';
   var altM  = alt != null ? Math.round(alt) + ' m' : 'N/A';
-  var spd   = d.velocity != null ? Math.round(d.velocity * 3.6) + ' km/h' : 'N/A';
+  var spdKm = d.velocity != null ? Math.round(d.velocity * 3.6) + ' km/h' : 'N/A';
+  var spdKt = d.velocity != null ? Math.round(d.velocity * 1.94384) + ' kt' : 'N/A';
+  var spdStr = d.velocity != null ? spdKt + ' / ' + spdKm : 'N/A';
   var hdg   = d.true_track != null ? Math.round(d.true_track) + '°' : 'N/A';
   var vr    = d.vertical_rate;
   var vrtStr = vr != null
@@ -538,7 +540,7 @@ function buildPopup(d) {
     + row('Matrícula', d.origin_country || 'N/A', '')
     + row('Status',    gnd, 'a')
     + row('Altitude',  altFt + ' / ' + altM, 'g')
-    + row('Velocidade',spd, '')
+    + row('Velocidade',spdStr, '')
     + row('Rumo',      hdg, 'c')
     + row('Vert.',     vrtStr, '')
     + '</div>';
@@ -736,9 +738,6 @@ function renderList() {
       + '<div class="aci-info">'
         + '<span class="aci-cs ' + cat + '">' + cs + '</span>'
         + '<span class="aci-sub">' + (d.origin_country || 'Desconhecido') + '</span>'
-      + '</div>'
-      + '<div class="aci-r">'
-        + '<span class="aci-spd">' + spd + '</span>'
       + '</div>'
     + '</div>';
   }).join('');
