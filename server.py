@@ -11,14 +11,27 @@ import os
 import sys
 import traceback
 import socketserver
+import time
 
 # Render.com injects PORT via environment variable
 PORT = int(os.environ.get("PORT", 9090))
 DIR  = os.path.dirname(os.path.abspath(__file__))
 
+# ── In-Memory Cache (Evita timeouts e bloqueios da OpenSky) ──
+CACHE = {"time": 0, "data": b""}
+
 
 class Handler(http.server.BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
+
+    # ── CORS Preflight (Essencial para GitHub Pages / Nuvemshop) ──
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "*")
+        self.send_header("Connection", "keep-alive")
+        self.end_headers()
 
     # ── Proxy OpenSky ────────────────────────────────────────
     def do_GET(self):
@@ -31,27 +44,45 @@ class Handler(http.server.BaseHTTPRequestHandler):
             traceback.print_exc()
 
     def _proxy_opensky(self):
+        global CACHE
         parsed = urllib.parse.urlparse(self.path)
         qs     = parsed.query
         target = "https://opensky-network.org/api/states/all"
         if qs:
             target += "?" + qs
-        try:
-            req = urllib.request.Request(
-                target,
-                headers={"User-Agent": "RadarBrasil/2.0"}
-            )
-            with urllib.request.urlopen(req, timeout=20) as r:
-                body = r.read()
+
+        # 1. Retorna do cache se tiver menos de 6 segundos
+        if CACHE["data"] and (time.time() - CACHE["time"] < 6):
+            body = CACHE["data"]
             code = 200
-        except Exception as ex:
-            print("[proxy-error]", ex)
-            body = json.dumps({"error": str(ex)}).encode("utf-8")
-            code = 502
+        else:
+            try:
+                req = urllib.request.Request(
+                    target,
+                    headers={"User-Agent": "RadarBrasil/3.0 (CORS-Cache-Proxy)"}
+                )
+                with urllib.request.urlopen(req, timeout=18) as r:
+                    body = r.read()
+                code = 200
+                # Salva no cache
+                CACHE["data"] = body
+                CACHE["time"] = time.time()
+            except Exception as ex:
+                print("[proxy-error]", ex)
+                # Fallback espetacular: se der erro/timeout mas tivermos cache antigo, entregamos ele!
+                if CACHE["data"]:
+                    print("[proxy-fallback] Usando cache antigo devido a erro na OpenSky")
+                    body = CACHE["data"]
+                    code = 200
+                else:
+                    body = json.dumps({"error": str(ex)}).encode("utf-8")
+                    code = 502
 
         self.send_response(code)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "*")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Connection", "keep-alive")
         self.end_headers()
@@ -65,6 +96,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             body = f.read()
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Connection", "keep-alive")
         self.end_headers()
