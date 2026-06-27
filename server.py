@@ -41,7 +41,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 target,
                 headers={"User-Agent": "RadarBrasil/2.0"}
             )
-            with urllib.request.urlopen(req, timeout=12) as r:
+            with urllib.request.urlopen(req, timeout=20) as r:
                 body = r.read()
             code = 200
         except Exception as ex:
