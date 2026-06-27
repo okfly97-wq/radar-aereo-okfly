@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
 <title>Radar Aéreo OK FLY — Tempo Real</title>
 <meta name="description" content="Radar de aeronaves em tempo real cobrindo todo o Brasil via ADSB.lol e OpenSky Network."/>
+<!-- POLYFILLS OBRIGATÓRIOS PARA SMART TVS LG WEBOS E SAMSUNG TIZEN (PROMISE, FETCH, ES5/ES6 CORE) -->
+<script src="https://cdn.jsdelivr.net/npm/promise-polyfill@8/dist/polyfill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/whatwg-fetch@3.6.2/dist/fetch.umd.min.js"></script>
+<script src="https://unpkg.com/core-js-bundle@3.37.1/minified.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
@@ -767,7 +771,7 @@ window._sel = function(icao24) { selectAircraft(icao24, false); };
 /* =========================================================
    SMART TV POLYFILLS (SUPORTE A NAVEGADORES LEGADOS)
    ========================================================= */
-if (!Promise.any) {
+if (typeof Promise !== 'undefined' && !Promise.any) {
   Promise.any = function(promises) {
     return new Promise(function(resolve, reject) {
       var errors = [];
