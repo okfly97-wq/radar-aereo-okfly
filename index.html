@@ -1067,7 +1067,8 @@ async function initWeatherLayer() {
       if (weatherLayer) map.removeLayer(weatherLayer);
       weatherLayer = L.tileLayer(tileUrl, {
         opacity: 0.55, // Transparencia elegante de 55% para nao ofuscar as aeronaves
-        maxZoom: 18,
+        maxNativeZoom: 12, // Evita as mensagens "Zoom Level Not Supported"
+        maxZoom: 12,       // Esconde a chuva no zoom 13+ para limpar a tela e inspecionar voos de perto!
         attribution: '&copy; RainViewer / REDEMET'
       }).addTo(map);
     }
