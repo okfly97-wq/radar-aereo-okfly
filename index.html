@@ -692,15 +692,17 @@ window._sel = function(icao24) { selectAircraft(icao24, false); };
    FETCH FROM PROXY
    ========================================================= */
 async function fetchAircraft() {
+  console.log('[Radar] Executando busca v3.5...');
   setStatus('loading', 'Atualizando...');
   var openskyUrl = 'https://opensky-network.org/api/states/all?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax;
   var adsbLolUrl = 'https://api.adsb.lol/v2/lat/-14/lon/-53/dist/2000'; // Raio de 2000 NM (cobre todo o Brasil)
 
   var reqs = [
-    { type: 'adsblol',       url: 'https://radar-aereo-okfly.onrender.com/api/adsblol' }, // 1. Tenta nosso proxy Render com Cache (1ms, infalível)
+    { type: 'adsblol',       url: 'https://radar-aereo-okfly.onrender.com/api/adsblol' }, // 1. Nosso proxy Render com Cache (1ms, infalível)
     { type: 'jsonp_adsblol', url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(adsbLolUrl) }, // 2. Tenta via AllOrigins /get wrapper
-    { type: 'adsblol',       url: 'https://corsproxy.io/?' + encodeURIComponent(adsbLolUrl) }, // 3. Tenta via corsproxy
-    { type: 'adsblol',       url: adsbLolUrl }, // 4. Tenta direto
+    { type: 'adsblol',       url: 'https://api.allorigins.win/raw?url=' + encodeURIComponent(adsbLolUrl) }, // 3. Tenta via AllOrigins raw
+    { type: 'adsblol',       url: 'https://corsproxy.io/?' + encodeURIComponent(adsbLolUrl) }, // 4. Tenta via corsproxy
+    { type: 'adsblol',       url: adsbLolUrl }, // 5. Tenta direto
     { type: 'raw',           url: 'https://corsproxy.io/?' + encodeURIComponent(openskyUrl) },
     { type: 'jsonp',         url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(openskyUrl) },
     { type: 'raw',           url: openskyUrl },
@@ -710,6 +712,7 @@ async function fetchAircraft() {
   try {
     // Dispara as requisições em paralelo. O mais rápido e válido vence!
     var data = await Promise.any(reqs.map(async function(item) {
+      console.log('[Radar] Disparando requisição:', item.url);
       var r = await fetch(item.url, { signal: AbortSignal.timeout(15000) });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       var j = await r.json();
@@ -718,9 +721,11 @@ async function fetchAircraft() {
       }
       if (item.type === 'adsblol' || item.type === 'jsonp_adsblol') {
         if (!j || !j.ac) throw new Error('Invalid ADSB.lol structure');
+        console.log('[Radar] SUCESSO VITÓRIA com ADSB.lol via:', item.url);
         return { type: 'adsblol', list: j.ac };
       } else {
         if (!j || j.error || !j.states) throw new Error('Invalid OpenSky structure');
+        console.log('[Radar] SUCESSO VITÓRIA com OpenSky via:', item.url);
         return { type: 'opensky', list: j.states };
       }
     }));
