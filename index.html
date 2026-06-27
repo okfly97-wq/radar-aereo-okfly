@@ -170,6 +170,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 .pu-k{color:var(--muted);white-space:nowrap}
 .pu-v{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--white);text-align:right}
 .pu-v.g{color:var(--green)} .pu-v.a{color:var(--amber)} .pu-v.c{color:var(--cyan)}
+
+/* CITY LABELS */
+.city-label{
+  background:rgba(7,14,28,.92)!important;border:1px solid rgba(0,255,157,.45)!important;
+  border-radius:5px!important;color:#00ff9d!important;
+  font-family:'Inter',sans-serif!important;font-size:11px!important;font-weight:600!important;
+  padding:3px 8px!important;box-shadow:0 3px 12px rgba(0,0,0,.7)!important;
+  text-shadow:0 0 8px rgba(0,255,157,.4)!important;pointer-events:none;
+}
+.city-label::before{display:none!important;}
 </style>
 </head>
 <body>
@@ -273,6 +283,20 @@ map.zoomControl.setPosition('bottomleft');
 L.rectangle([[BBOX.lamin,BBOX.lomin],[BBOX.lamax,BBOX.lomax]], {
   color:'rgba(0,212,255,.18)', weight:1, fill:false, dashArray:'10 7'
 }).addTo(map);
+
+/* Permanent City Markers */
+var CITIES = [
+  { name: 'São João del-Rei', lat: -21.135, lng: -44.261 },
+  { name: 'Pirassununga',     lat: -21.996, lng: -47.426 },
+  { name: 'Tietê',            lat: -23.106, lng: -47.716 }
+];
+CITIES.forEach(function(c) {
+  L.circleMarker([c.lat, c.lng], {
+    radius: 4, fillColor: '#00ff9d', fillOpacity: 0.9, color: '#050a12', weight: 1.5
+  }).addTo(map).bindTooltip(c.name, {
+    permanent: true, direction: 'top', className: 'city-label', offset: [0, -3]
+  });
+});
 
 /* =========================================================
    STATE
