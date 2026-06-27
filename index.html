@@ -313,6 +313,12 @@ try {
     attribution:'&copy;<a href="https://carto.com/">CARTO</a> &copy;<a href="https://osm.org/copyright">OSM</a>',
     subdomains:'abcd', maxZoom:19
   }).addTo(map);
+
+  // FALLBACK BRUTAL E DEFINITIVO PARA SMART TVS: Camada OpenStreetMap com http:// puro (ignora falhas SSL)
+  L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'&copy; OpenStreetMap',
+    subdomains:'abc', maxZoom:19, opacity:0.25
+  }).addTo(map);
   map.zoomControl.setPosition('bottomleft');
 } catch (mapErr) {
   console.error('[Radar] Fatal Map Error:', mapErr);
@@ -824,10 +830,76 @@ function fetchWithTimeout(url, ms) {
 }
 
 /* =========================================================
-   FETCH FROM PROXY
+   FETCH FROM PROXY & SMART TV JSONP SCRIPT TUNNEL
    ========================================================= */
+window._tvJsonpCallback = function(json) {
+  console.log('[Radar] SUCESSO VITÓRIA ABSOLUTA via JSONP SCRIPT TUNNEL na TV LG!');
+  if (!json || !json.contents) return;
+  var j;
+  try { j = JSON.parse(json.contents); } catch(e){ return; }
+  if (!j || !j.ac) return;
+  var parsed = j.ac.map(function(s) {
+    var callsign = (s.flight || '').trim() || s.r || s.hex;
+    var info = (s.r || 'N/A') + (s.t ? ' (' + s.t + ')' : '');
+    return {
+      icao24:         s.hex,
+      callsign:       callsign,
+      origin_country: info,
+      longitude:      s.lon,
+      latitude:       s.lat,
+      baro_altitude:  s.alt_baro != null ? (s.alt_baro / 3.281) : null,
+      on_ground:      s.alt_baro == null || s.alt_baro <= 0,
+      velocity:       s.gs != null ? (s.gs * 1.852 / 3.6) : null,
+      true_track:     s.track,
+      vertical_rate:  s.baro_rate != null ? (s.baro_rate / 196.85) : null,
+      geo_altitude:   s.alt_geom != null ? (s.alt_geom / 3.281) : null
+    };
+  }).filter(function(d){ return d.latitude != null && d.longitude != null; });
+
+  var cur = {};
+  var curSize = 0;
+  parsed.forEach(function(d) {
+    var id = d.icao24;
+    if (!cur[id]) { cur[id] = true; curSize++; }
+    addHist(id, d.latitude, d.longitude);
+    if (id === selIcao) showTrack(id);
+    var latlng = [d.latitude, d.longitude];
+    var icon   = buildIcon(d, id === selIcao);
+    if (markers[id]) {
+      var e = markers[id];
+      e.data = d;
+      if (d.latitude !== e.apiLat || d.longitude !== e.apiLng) {
+        e.apiLat = d.latitude; e.apiLng = d.longitude; e.lastUpdate = Date.now();
+        var dLat = e.currentLat - d.latitude, dLng = e.currentLng - d.longitude;
+        var distDiff = Math.sqrt(dLat * dLat + dLng * dLng) * 111132;
+        if (d.on_ground || distDiff > 600) { e.currentLat = d.latitude; e.currentLng = d.longitude; e.marker.setLatLng(latlng); }
+        else { e.currentLat = (e.currentLat * 0.75) + (d.latitude * 0.25); e.currentLng = (e.currentLng * 0.75) + (d.longitude * 0.25); }
+      }
+      e.marker.setIcon(icon); e.marker.setPopupContent(buildPopup(d)); e.marker.setTooltipContent(buildTooltip(d));
+    } else {
+      var mk = L.marker(latlng, { icon:icon }).addTo(map).bindPopup(buildPopup(d), { maxWidth:258 }).bindTooltip(buildTooltip(d), { direction:'right', opacity:1 });
+      mk.off('click'); mk.on('click', (function(icao24){ return function(e){ L.DomEvent.stopPropagation(e); selectAircraft(icao24, false); }; })(id));
+      markers[id] = { marker: mk, data: d, lastUpdate: Date.now(), apiLat: d.latitude, apiLng: d.longitude, currentLat: d.latitude, currentLng: d.longitude };
+    }
+  });
+
+  for (var mId in markers) {
+    if (Object.prototype.hasOwnProperty.call(markers, mId)) {
+      if (!cur[mId]) {
+        map.removeLayer(markers[mId].marker); delete markers[mId]; hideTrack(mId);
+        if (posHist[mId]) delete posHist[mId];
+        if (mId === selIcao) { selIcao = null; map.closePopup(); }
+      }
+    }
+  }
+  var total = curSize;
+  document.getElementById('v-total').textContent = total;
+  setStatus('ok', total + ' aeronaves');
+  renderList(); flashScan(); resetCountdown();
+};
+
 function fetchAircraft() {
-  console.log('[Radar] Executando busca v3.7 (LG Smart TV Universal Mode)...');
+  console.log('[Radar] Executando busca v3.8 (LG Smart TV Universal Mode & JSONP Tunnel)...');
   setStatus('loading', 'Atualizando...');
   var openskyUrl = 'https://opensky-network.org/api/states/all?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax;
   var adsbLolUrl = 'https://api.adsb.lol/v2/lat/-14/lon/-53/dist/2000'; // Raio de 2000 NM (cobre todo o Brasil)
@@ -988,16 +1060,25 @@ function fetchAircraft() {
     resetCountdown();
 
   }).catch(function(err) {
-    console.warn('[Radar] fetch error:', err);
+    console.warn('[Radar] fetch error, SOLTANDO O TANQUE DE GUERRA DO SCRIPT TAG JSONP NA TV LG:', err);
     setStatus('error', 'Sem dados — retentando...');
     resetCountdown();
-    // Exibe o depurador visual de rede na barra lateral da TV LG para entendermos por que as requisições falham
+    
+    // FALLBACK BRUTAL DE SCRIPT TAG JSONP PARA SMART TVS (Ignora CORS e regras restritas de HTTPS/SSL)
+    var scriptId = 'tv-jsonp-tunnel';
+    var oldScript = document.getElementById(scriptId);
+    if (oldScript) oldScript.remove();
+    var s = document.createElement('script');
+    s.id = scriptId;
+    s.src = 'http://api.allorigins.win/get?url=' + encodeURIComponent(adsbLolUrl) + '&callback=_tvJsonpCallback';
+    document.body.appendChild(s);
+
     var listEl = document.getElementById('alist');
     if (listEl) {
-      listEl.innerHTML = '<div style="padding:15px;color:#ff4060;font-family:monospace;font-size:12px;line-height:1.4;">'
+      listEl.innerHTML = '<div style="padding:15px;color:#ffb340;font-family:monospace;font-size:12px;line-height:1.4;">'
         + '<b>🚨 TV Network Blocked:</b><br>' + err.message + '<br>'
-        + '<b>Causa:</b> Handshake SSL ou regra CORS legada impedindo o fetch.<br>'
-        + '<b>UserAgent:</b> ' + navigator.userAgent + '</div>';
+        + '<b>Causa:</b> Handshake SSL ou regra CORS legada impediu o fetch.<br>'
+        + '<b>Fallback Ativo:</b> Injetando túnel JSONP via SCRIPT tag direto no DOM para bypassar o firewall...</div>';
     }
   });
 }
