@@ -1,0 +1,2 @@
+# Radar Aereo Brasil usa apenas Python stdlib
+# Nenhuma dependencia externa necessaria
