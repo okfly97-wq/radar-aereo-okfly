@@ -1050,10 +1050,39 @@ map.on('dragstart zoomstart', function() { userInteracted(); });
 map.on('click', function() { deselect(); });
 
 /* =========================================================
+   WEATHER RADAR (REDEMET / RAINVIEWER API)
+   ========================================================= */
+var weatherLayer = null;
+async function initWeatherLayer() {
+  try {
+    console.log('[Radar] Buscando dados de radar meteorologico (REDEMET / RainViewer)...');
+    var res = await fetchWithTimeout('https://api.rainviewer.com/public/weather-maps.json', 10000);
+    var data = await res.json();
+    if (data && data.radar && data.radar.past && data.radar.past.length > 0) {
+      // Pega o timestamp mais recente (o ultimo da lista)
+      var last = data.radar.past[data.radar.past.length - 1];
+      // Esquema de cores 2: REDEMET / Classic Color Weather Radar (Verde, Amarelo, Vermelho, Roxo)
+      var tileUrl = data.host + last.path + '/512/{z}/{x}/{y}/2/1_1.png';
+      console.log('[Radar] Camada meteorologica carregada:', tileUrl);
+      if (weatherLayer) map.removeLayer(weatherLayer);
+      weatherLayer = L.tileLayer(tileUrl, {
+        opacity: 0.55, // Transparencia elegante de 55% para nao ofuscar as aeronaves
+        maxZoom: 18,
+        attribution: '&copy; RainViewer / REDEMET'
+      }).addTo(map);
+    }
+  } catch(e) {
+    console.warn('[Radar] Erro ao carregar meteorologia:', e);
+  }
+}
+
+/* =========================================================
    BOOT
    ========================================================= */
 setInterval(updateClock, 1000);
 updateClock();
+initWeatherLayer();
+setInterval(initWeatherLayer, 300000); // Atualiza meteorologia a cada 5 minutos
 fetchAircraft();
 setInterval(fetchAircraft, FETCH_MS);
 setInterval(animateAircraft, 200);
