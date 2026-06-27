@@ -308,19 +308,25 @@ try {
     throw new Error('Biblioteca Leaflet (L) não foi carregada pelo navegador da TV (Erro de CDN/SSL).');
   }
   map = L.map('map', { center:CENTER, zoom:ZOOM, zoomControl:true, attributionControl:true });
-  // 1. CAMADA PRIMÁRIA: CartoDB Dark Matter via HTTP direto (Sem subdomínios para Smart TVs e com nomes geográficos em PT-BR nativo: Brasil com 'S')
-  var cartoLayer = L.tileLayer('http://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+  // 1. CAMADA PRIMÁRIA UNIVERSAL (PC, CELULAR E TV): CartoDB Dark Matter com URL Relativa (//) para garantir HTTPS no PC/Mobile (evitando Mixed Content) e compatibilidade com Smart TVs. Exibe nomes em PT-BR nativo: Brasil com 'S'!
+  var cartoLayer = L.tileLayer('//basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
     attribution: '&copy; CARTO &copy; OSM (Brasil com S)',
     maxZoom: 19, crossOrigin: false
   }).addTo(map);
 
-  // 2. CAMADA SECUNDÁRIA (Fallback OpenStreetMap puro via HTTP direto, também exibe Brasil com S, com opacidade elegante 35%)
+  // 2. CAMADA SECUNDÁRIA (Fallback CartoDB com HTTP puro exclusivo para Smart TVs antigas que recusam Handshake SSL)
+  var cartoHttpLayer = L.tileLayer('http://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+    attribution: '&copy; CARTO &copy; OSM HTTP (Brasil com S)',
+    maxZoom: 19, crossOrigin: false
+  });
+
+  // 3. CAMADA TERCIÁRIA (Fallback OpenStreetMap puro via HTTP direto, também exibe Brasil com S, com opacidade elegante 35%)
   var osmLayer = L.tileLayer('http://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap (Brasil com S)',
     maxZoom: 19, opacity: 0.35, crossOrigin: false
   });
 
-  // 3. CAMADA TERCIÁRIA (Fallback Esri ArcGIS Dark Gray Base, CDN governamental de força bruta)
+  // 4. CAMADA QUATERNÁRIA (Fallback Esri ArcGIS Dark Gray Base, CDN governamental de força bruta)
   var esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
     attribution: '&copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
     maxZoom: 16, crossOrigin: false
@@ -328,15 +334,23 @@ try {
 
   // Roteador de Fallback Automático via evento tileerror do Leaflet!!!
   cartoLayer.on('tileerror', function(err) {
-    console.warn('[Radar] CartoDB Basemap falhou na TV LG. Alternando instantaneamente para OpenStreetMap HTTP (Brasil com S)...', err);
-    if (!map.hasLayer(osmLayer)) {
+    console.warn('[Radar] CartoDB Primario falhou. Alternando instantaneamente para CartoDB HTTP puro (Smart TV Mode)...', err);
+    if (!map.hasLayer(cartoHttpLayer)) {
       map.removeLayer(cartoLayer);
+      cartoHttpLayer.addTo(map);
+    }
+  });
+
+  cartoHttpLayer.on('tileerror', function(err) {
+    console.warn('[Radar] CartoDB HTTP falhou. Alternando instantaneamente para OpenStreetMap HTTP (Brasil com S)...', err);
+    if (!map.hasLayer(osmLayer)) {
+      map.removeLayer(cartoHttpLayer);
       osmLayer.addTo(map);
     }
   });
 
   osmLayer.on('tileerror', function(err) {
-    console.warn('[Radar] OpenStreetMap Basemap falhou na TV LG. Alternando instantaneamente para Esri ArcGIS...', err);
+    console.warn('[Radar] OpenStreetMap Basemap falhou. Alternando instantaneamente para Esri ArcGIS...', err);
     if (!map.hasLayer(esriLayer)) {
       map.removeLayer(osmLayer);
       esriLayer.addTo(map);
