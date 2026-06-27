@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
 <title>Radar Aéreo OK FLY — Tempo Real</title>
 <meta name="description" content="Radar de aeronaves em tempo real cobrindo todo o Brasil via ADSB.lol e OpenSky Network."/>
-<!-- POLYFILLS OBRIGATÓRIOS PARA SMART TVS LG WEBOS E SAMSUNG TIZEN (PROMISE, FETCH, ES5/ES6 CORE) -->
-<script src="https://cdn.jsdelivr.net/npm/promise-polyfill@8/dist/polyfill.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/whatwg-fetch@3.6.2/dist/fetch.umd.min.js"></script>
-<script src="https://unpkg.com/core-js-bundle@3.37.1/minified.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<!-- POLYFILLS OBRIGATÓRIOS PARA SMART TVS LG WEBOS E SAMSUNG TIZEN (PROMISE, FETCH, ES5/ES6 CORE VIA CDNJS CLOUDFLARE SSL COMPATIBLE) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/promise-polyfill/8.3.0/polyfill.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/3.6.2/fetch.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/core-js/3.37.1/minified.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -281,7 +281,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
   <div id="nextupd">Próxima atualização em <b id="cd">10</b>s</div>
 </footer>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
 (function(){
 'use strict';
@@ -300,16 +300,27 @@ var CAT_C  = { airliner:'#00d4ff', helicopter:'#ffb340', small:'#00ff9d' };
 var CAT_DK = { airliner:'#0099bb', helicopter:'#bb7010', small:'#00bb74' };
 
 /* =========================================================
-   MAP SETUP
+   MAP SETUP WITH SMART TV DEBUGGER CATCHER
    ========================================================= */
-var map = L.map('map', { center:CENTER, zoom:ZOOM, zoomControl:true, attributionControl:true });
-
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution:'&copy;<a href="https://carto.com/">CARTO</a> &copy;<a href="https://osm.org/copyright">OSM</a>',
-  subdomains:'abcd', maxZoom:19
-}).addTo(map);
-
-map.zoomControl.setPosition('bottomleft');
+var map;
+try {
+  if (typeof L === 'undefined') {
+    throw new Error('Biblioteca Leaflet (L) não foi carregada pelo navegador da TV (Erro de CDN/SSL).');
+  }
+  map = L.map('map', { center:CENTER, zoom:ZOOM, zoomControl:true, attributionControl:true });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution:'&copy;<a href="https://carto.com/">CARTO</a> &copy;<a href="https://osm.org/copyright">OSM</a>',
+    subdomains:'abcd', maxZoom:19
+  }).addTo(map);
+  map.zoomControl.setPosition('bottomleft');
+} catch (mapErr) {
+  console.error('[Radar] Fatal Map Error:', mapErr);
+  var errBox = document.createElement('div');
+  errBox.style.cssText = 'position:fixed;inset:0;background:#110000;color:#ff4060;z-index:999999;padding:40px;font-size:24px;font-family:monospace;overflow:auto;';
+  errBox.innerHTML = '<h2>🚨 ERRO FATAL NA SMART TV LG</h2><br><p><b>Detalhes do Erro:</b> ' + mapErr.message + '</p><br><p><b>Stack:</b> ' + (mapErr.stack || 'N/A') + '</p><br><p><b>UserAgent:</b> ' + navigator.userAgent + '</p><br><p>Informe este erro ao suporte para calibração definitiva!</p>';
+  document.body.appendChild(errBox);
+  return; // Interrompe o script mantendo o depurador na tela da TV
+}
 
 L.rectangle([[BBOX.lamin,BBOX.lomin],[BBOX.lamax,BBOX.lomax]], {
   color:'rgba(0,212,255,.18)', weight:1, fill:false, dashArray:'10 7'
