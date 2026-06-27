@@ -627,16 +627,19 @@ function selectAircraft(icao24, isAuto) {
   renderList();
 
   if (!isAuto) {
-    // User selected — pause auto-cycle for 1 minute
-    autoMode = false;
-    updateAutoBadge();
-    clearTimeout(autoResumeT);
-    autoResumeT = setTimeout(function(){
-      autoMode = true;
-      updateAutoBadge();
-      advanceCycle();
-    }, 60000);
+    userInteracted();
   }
+}
+
+function userInteracted() {
+  autoMode = false;
+  updateAutoBadge();
+  clearTimeout(autoResumeT);
+  autoResumeT = setTimeout(function(){
+    autoMode = true;
+    updateAutoBadge();
+    advanceCycle();
+  }, 60000);
 }
 
 function deselect() {
@@ -648,15 +651,7 @@ function deselect() {
     map.closePopup();
     renderList();
   }
-  // Se o usuario clica no mapa vazio, pausa o ciclo automatico por 1 minuto para ele explorar livremente
-  autoMode = false;
-  updateAutoBadge();
-  clearTimeout(autoResumeT);
-  autoResumeT = setTimeout(function(){
-    autoMode = true;
-    updateAutoBadge();
-    advanceCycle();
-  }, 60000);
+  userInteracted();
 }
 
 function updateAutoBadge() {
@@ -1030,11 +1025,28 @@ function updateClock() {
 }
 
 /* =========================================================
-   MAP EVENTS
+   MAP EVENTS & INTERACTION LIFECYCLE
    ========================================================= */
-map.on('moveend zoomend', function() { renderList(); });
+map.on('moveend zoomend', function() {
+  // Se o usuario arrasta o mapa para outro lugar e o aviao selecionado sai da tela, solta automaticamente!
+  if (selIcao && markers[selIcao]) {
+    var bounds = map.getBounds();
+    var latlng = markers[selIcao].marker.getLatLng();
+    if (!bounds.contains(latlng)) {
+      var prev = markers[selIcao];
+      prev.marker.setIcon(buildIcon(prev.data, false));
+      hideTrack(selIcao);
+      selIcao = null;
+      map.closePopup();
+    }
+  }
+  renderList();
+});
 
-// Click on empty map -> deselect
+// Ao arrastar ou dar zoom no mapa, reseta o cronometro de 60 segundos de inatividade
+map.on('dragstart zoomstart', function() { userInteracted(); });
+
+// Click on empty map -> deselect & reset timer
 map.on('click', function() { deselect(); });
 
 /* =========================================================
