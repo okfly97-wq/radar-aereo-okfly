@@ -889,13 +889,22 @@ async function fetchAircraft() {
       if (markers[id]) {
         var e = markers[id];
         e.data = d;
-        e.lastUpdate = Date.now();
-        // Se a posição da API divergir mais de 300 metros da estimativa, ou se estiver no solo, sincroniza
-        var distDiff = Math.hypot(e.currentLat - d.latitude, e.currentLng - d.longitude) * 111132;
-        if (d.on_ground || distDiff > 300) {
-          e.currentLat = d.latitude;
-          e.currentLng = d.longitude;
-          e.marker.setLatLng(latlng);
+        // Apenas processa se for um dado novo da API (ignora repeticoes de cache)
+        if (d.latitude !== e.apiLat || d.longitude !== e.apiLng) {
+          e.apiLat = d.latitude;
+          e.apiLng = d.longitude;
+          e.lastUpdate = Date.now();
+          // Se a divergencia for > 600 metros ou se estiver no solo, ressincroniza
+          var distDiff = Math.hypot(e.currentLat - d.latitude, e.currentLng - d.longitude) * 111132;
+          if (d.on_ground || distDiff > 600) {
+            e.currentLat = d.latitude;
+            e.currentLng = d.longitude;
+            e.marker.setLatLng(latlng);
+          } else {
+            // Suavizacao espetacular (Filtro Kalman simplificado): mescla a nova posicao sem saltos brutos
+            e.currentLat = (e.currentLat * 0.75) + (d.latitude * 0.25);
+            e.currentLng = (e.currentLng * 0.75) + (d.longitude * 0.25);
+          }
         }
         e.marker.setIcon(icon);
         e.marker.setPopupContent(buildPopup(d));
@@ -918,6 +927,8 @@ async function fetchAircraft() {
           marker: mk,
           data: d,
           lastUpdate: Date.now(),
+          apiLat: d.latitude,
+          apiLng: d.longitude,
           currentLat: d.latitude,
           currentLng: d.longitude
         };
