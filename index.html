@@ -659,10 +659,10 @@ function updateAutoBadge() {
   var txt   = document.getElementById('autotxt');
   if (autoMode) {
     badge.classList.remove('paused');
-    txt.textContent = 'Ciclo automático ativo';
+    txt.textContent = 'Ciclo automático';
   } else {
     badge.classList.add('paused');
-    txt.textContent = 'Manual — retoma em 1 min';
+    txt.textContent = 'Modo manual';
   }
 }
 
