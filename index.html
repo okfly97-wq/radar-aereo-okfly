@@ -889,7 +889,14 @@ async function fetchAircraft() {
       if (markers[id]) {
         var e = markers[id];
         e.data = d;
-        e.marker.setLatLng(latlng);
+        e.lastUpdate = Date.now();
+        // Se a posição da API divergir mais de 300 metros da estimativa, ou se estiver no solo, sincroniza
+        var distDiff = Math.hypot(e.currentLat - d.latitude, e.currentLng - d.longitude) * 111132;
+        if (d.on_ground || distDiff > 300) {
+          e.currentLat = d.latitude;
+          e.currentLng = d.longitude;
+          e.marker.setLatLng(latlng);
+        }
         e.marker.setIcon(icon);
         e.marker.setPopupContent(buildPopup(d));
         e.marker.setTooltipContent(buildTooltip(d));
@@ -907,7 +914,13 @@ async function fetchAircraft() {
           };
         })(id));
 
-        markers[id] = { marker:mk, data:d };
+        markers[id] = {
+          marker: mk,
+          data: d,
+          lastUpdate: Date.now(),
+          currentLat: d.latitude,
+          currentLng: d.longitude
+        };
       }
     });
 
@@ -933,6 +946,30 @@ async function fetchAircraft() {
     setStatus('error', 'Sem dados — retentando...');
   }
   resetCountdown();
+}
+
+/* =========================================================
+   DEAD RECKONING (FLIGHTRADAR24 SMOOTH ANIMATION)
+   ========================================================= */
+function animateAircraft() {
+  var now = Date.now();
+  Object.values(markers).forEach(function(e) {
+    var d = e.data;
+    if (d.on_ground || d.velocity == null || d.true_track == null || d.velocity <= 0) return;
+    
+    // Se o avião não recebe dados reais há mais de 60 segundos, cessa a animação
+    if (now - e.lastUpdate > 60000) return;
+
+    var dt = 0.2; // 200ms em segundos
+    var dist = d.velocity * dt; // Metros percorridos neste frame
+    var rad = d.true_track * Math.PI / 180;
+    var dLat = (dist * Math.cos(rad)) / 111132;
+    var dLng = (dist * Math.sin(rad)) / (111132 * Math.cos(e.currentLat * Math.PI / 180));
+
+    e.currentLat += dLat;
+    e.currentLng += dLng;
+    e.marker.setLatLng([e.currentLat, e.currentLng]);
+  });
 }
 
 /* =========================================================
@@ -988,6 +1025,7 @@ setInterval(updateClock, 1000);
 updateClock();
 fetchAircraft();
 setInterval(fetchAircraft, FETCH_MS);
+setInterval(animateAircraft, 200);
 startCycle();
 
 })();
