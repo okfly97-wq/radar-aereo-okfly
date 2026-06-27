@@ -695,19 +695,23 @@ async function fetchAircraft() {
   setStatus('loading', 'Atualizando...');
   var targetUrl = 'https://opensky-network.org/api/states/all?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax;
   
-  var urls = [
-    targetUrl, // 1. Tenta direto na OpenSky
-    'https://corsproxy.io/?' + encodeURIComponent(targetUrl), // 2. Tenta via corsproxy
-    'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl), // 3. Tenta via allorigins
-    'https://radar-aereo-okfly.onrender.com/api/opensky?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax // 4. Tenta via nosso backend Render
+  var reqs = [
+    { type: 'raw',   url: 'https://corsproxy.io/?' + encodeURIComponent(targetUrl) },
+    { type: 'raw',   url: 'https://corsproxy.io/?' + targetUrl },
+    { type: 'jsonp', url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(targetUrl) },
+    { type: 'raw',   url: targetUrl },
+    { type: 'raw',   url: 'https://radar-aereo-okfly.onrender.com/api/opensky?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax }
   ];
 
   try {
-    // Dispara as requisições em paralelo. A primeira que responder com JSON válido vence!
-    var json = await Promise.any(urls.map(async function(u) {
-      var r = await fetch(u, { signal: AbortSignal.timeout(15000) });
+    // Dispara as requisições em paralelo com parsing flexível.
+    var json = await Promise.any(reqs.map(async function(item) {
+      var r = await fetch(item.url, { signal: AbortSignal.timeout(16000) });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       var j = await r.json();
+      if (item.type === 'jsonp' && j.contents) {
+        j = JSON.parse(j.contents);
+      }
       if (!j || j.error || !j.states) throw new Error('Invalid JSON structure');
       return j;
     }));
