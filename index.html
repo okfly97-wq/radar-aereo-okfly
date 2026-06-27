@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>Radar Aereo Brasil — OpenSky Network</title>
-<meta name="description" content="Radar de aeronaves em tempo real cobrindo todo o Brasil via OpenSky Network."/>
+<title>Radar Aéreo OK FLY — Tempo Real</title>
+<meta name="description" content="Radar de aeronaves em tempo real cobrindo todo o Brasil via ADSB.lol e OpenSky Network."/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
@@ -30,7 +30,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 
 /* TOP BAR */
 #topbar{
-  position:fixed;top:0;left:0;right:0;z-index:1000;height:58px;
+  position:fixed;top:0;left:0;right:0;z-index:99999;height:58px;
   background:var(--panel);border-bottom:1px solid var(--border);
   backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
   display:flex;align-items:center;justify-content:space-between;padding:0 18px;gap:14px;
@@ -61,7 +61,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 
 /* SIDE PANEL */
 #panel{
-  position:fixed;top:70px;right:13px;z-index:1000;
+  position:fixed;top:70px;right:13px;z-index:99998;
   width:135px;max-height:calc(100vh - 128px);
   background:var(--panel);border:1px solid var(--border);border-radius:12px;
   backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
@@ -127,7 +127,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 
 /* BOTTOM BAR */
 #botbar{
-  position:fixed;bottom:0;left:0;right:0;z-index:1000;height:44px;
+  position:fixed;bottom:0;left:0;right:0;z-index:99998;height:44px;
   background:var(--panel);border-top:1px solid var(--border);
   backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
   display:flex;align-items:center;justify-content:space-between;padding:0 18px;
@@ -235,8 +235,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
       </defs>
     </svg>
     <div class="brand-text">
-      <h1>Radar Aereo Brasil</h1>
-      <small>OpenSky Network &mdash; Tempo Real</small>
+      <h1>Radar Aéreo OK FLY</h1>
+      <small>ADSB.lol & OpenSky &mdash; Tempo Real</small>
     </div>
   </div>
 
