@@ -693,47 +693,74 @@ window._sel = function(icao24) { selectAircraft(icao24, false); };
    ========================================================= */
 async function fetchAircraft() {
   setStatus('loading', 'Atualizando...');
-  var targetUrl = 'https://opensky-network.org/api/states/all?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax;
-  
+  var openskyUrl = 'https://opensky-network.org/api/states/all?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax;
+  var adsbLolUrl = 'https://api.adsb.lol/v2/lat/-14/lon/-53/dist/2000'; // Raio de 2000 NM (cobre todo o Brasil)
+
   var reqs = [
-    { type: 'raw',   url: 'https://corsproxy.io/?' + encodeURIComponent(targetUrl) },
-    { type: 'raw',   url: 'https://corsproxy.io/?' + targetUrl },
-    { type: 'jsonp', url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(targetUrl) },
-    { type: 'raw',   url: targetUrl },
-    { type: 'raw',   url: 'https://radar-aereo-okfly.onrender.com/api/opensky?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax }
+    { type: 'adsblol', url: adsbLolUrl }, // 1. Tenta ADSB.lol (Gratuito, sem rate limit 429 e com modelo do avião!)
+    { type: 'raw',     url: 'https://corsproxy.io/?' + encodeURIComponent(openskyUrl) },
+    { type: 'raw',     url: 'https://corsproxy.io/?' + openskyUrl },
+    { type: 'jsonp',   url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(openskyUrl) },
+    { type: 'raw',     url: openskyUrl },
+    { type: 'raw',     url: 'https://radar-aereo-okfly.onrender.com/api/opensky?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax }
   ];
 
   try {
-    // Dispara as requisições em paralelo com parsing flexível.
-    var json = await Promise.any(reqs.map(async function(item) {
-      var r = await fetch(item.url, { signal: AbortSignal.timeout(16000) });
+    // Dispara as requisições em paralelo. O mais rápido e válido vence!
+    var data = await Promise.any(reqs.map(async function(item) {
+      var r = await fetch(item.url, { signal: AbortSignal.timeout(15000) });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       var j = await r.json();
       if (item.type === 'jsonp' && j.contents) {
         j = JSON.parse(j.contents);
       }
-      if (!j || j.error || !j.states) throw new Error('Invalid JSON structure');
-      return j;
+      if (item.type === 'adsblol') {
+        if (!j || !j.ac) throw new Error('Invalid ADSB.lol structure');
+        return { type: 'adsblol', list: j.ac };
+      } else {
+        if (!j || j.error || !j.states) throw new Error('Invalid OpenSky structure');
+        return { type: 'opensky', list: j.states };
+      }
     }));
 
-    var states = json.states || [];
+    var parsed = [];
     var cur = new Set();
 
-    var parsed = states.map(function(s){
-      return {
-        icao24:         s[0],
-        callsign:       (s[1] || '').trim() || s[0],
-        origin_country: s[2],
-        longitude:      s[5],
-        latitude:       s[6],
-        baro_altitude:  s[7],
-        on_ground:      s[8],
-        velocity:       s[9],
-        true_track:     s[10],
-        vertical_rate:  s[11],
-        geo_altitude:   s[13]
-      };
-    }).filter(function(d){ return d.latitude != null && d.longitude != null; });
+    if (data.type === 'adsblol') {
+      parsed = data.list.map(function(s) {
+        var callsign = (s.flight || '').trim() || s.r || s.hex;
+        var info = (s.r || 'N/A') + (s.t ? ' (' + s.t + ')' : '');
+        return {
+          icao24:         s.hex,
+          callsign:       callsign,
+          origin_country: info, // Exibe Matrícula (Modelo)
+          longitude:      s.lon,
+          latitude:       s.lat,
+          baro_altitude:  s.alt_baro != null ? (s.alt_baro / 3.281) : null,
+          on_ground:      s.alt_baro == null || s.alt_baro <= 0,
+          velocity:       s.gs != null ? (s.gs * 1.852 / 3.6) : null,
+          true_track:     s.track,
+          vertical_rate:  s.baro_rate != null ? (s.baro_rate / 196.85) : null,
+          geo_altitude:   s.alt_geom != null ? (s.alt_geom / 3.281) : null
+        };
+      }).filter(function(d){ return d.latitude != null && d.longitude != null; });
+    } else {
+      parsed = data.list.map(function(s){
+        return {
+          icao24:         s[0],
+          callsign:       (s[1] || '').trim() || s[0],
+          origin_country: s[2],
+          longitude:      s[5],
+          latitude:       s[6],
+          baro_altitude:  s[7],
+          on_ground:      s[8],
+          velocity:       s[9],
+          true_track:     s[10],
+          vertical_rate:  s[11],
+          geo_altitude:   s[13]
+        };
+      }).filter(function(d){ return d.latitude != null && d.longitude != null; });
+    }
 
     parsed.forEach(function(d) {
       var id = d.icao24;
