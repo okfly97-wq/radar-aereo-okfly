@@ -1040,6 +1040,7 @@ map.on('moveend zoomend', function() {
       map.closePopup();
     }
   }
+  checkWeatherLayer();
   renderList();
 });
 
@@ -1053,6 +1054,17 @@ map.on('click', function() { deselect(); });
    WEATHER RADAR (REDEMET / RAINVIEWER API)
    ========================================================= */
 var weatherLayer = null;
+
+function checkWeatherLayer() {
+  if (!weatherLayer) return;
+  var z = map.getZoom();
+  if (z > 12) {
+    if (map.hasLayer(weatherLayer)) map.removeLayer(weatherLayer);
+  } else {
+    if (!map.hasLayer(weatherLayer)) map.addLayer(weatherLayer);
+  }
+}
+
 async function initWeatherLayer() {
   try {
     console.log('[Radar] Buscando dados de radar meteorologico (REDEMET / RainViewer)...');
@@ -1064,13 +1076,14 @@ async function initWeatherLayer() {
       // Esquema de cores 2: REDEMET / Classic Color Weather Radar (Verde, Amarelo, Vermelho, Roxo)
       var tileUrl = data.host + last.path + '/512/{z}/{x}/{y}/2/1_1.png';
       console.log('[Radar] Camada meteorologica carregada:', tileUrl);
-      if (weatherLayer) map.removeLayer(weatherLayer);
+      if (weatherLayer && map.hasLayer(weatherLayer)) map.removeLayer(weatherLayer);
       weatherLayer = L.tileLayer(tileUrl, {
         opacity: 0.55, // Transparencia elegante de 55% para nao ofuscar as aeronaves
-        maxNativeZoom: 12, // Evita as mensagens "Zoom Level Not Supported"
-        maxZoom: 12,       // Esconde a chuva no zoom 13+ para limpar a tela e inspecionar voos de perto!
+        maxNativeZoom: 12,
+        maxZoom: 12,
         attribution: '&copy; RainViewer / REDEMET'
-      }).addTo(map);
+      });
+      checkWeatherLayer();
     }
   } catch(e) {
     console.warn('[Radar] Erro ao carregar meteorologia:', e);
