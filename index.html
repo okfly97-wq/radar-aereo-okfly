@@ -672,26 +672,21 @@ async function fetchAircraft() {
   var targetUrl = 'https://opensky-network.org/api/states/all?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax;
   
   var urls = [
-    'https://corsproxy.io/?' + encodeURIComponent(targetUrl),
-    'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl),
-    '/api/opensky?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax
+    targetUrl, // 1. Tenta direto na OpenSky
+    'https://corsproxy.io/?' + encodeURIComponent(targetUrl), // 2. Tenta via corsproxy
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl), // 3. Tenta via allorigins
+    'https://radar-aereo-okfly.onrender.com/api/opensky?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax // 4. Tenta via nosso backend Render
   ];
 
-  var res = null;
-  var lastErr = null;
-  for (var i = 0; i < urls.length; i++) {
-    try {
-      res = await fetch(urls[i], { signal: AbortSignal.timeout(12000) });
-      if (res.ok) break;
-    } catch (e) {
-      lastErr = e;
-    }
-  }
-
   try {
-    if (!res || !res.ok) throw new Error('Falha em todos os proxies de conexão.');
-    var json = await res.json();
-    if (json.error) throw new Error(json.error);
+    // Dispara as requisições em paralelo. A primeira que responder com JSON válido vence!
+    var json = await Promise.any(urls.map(async function(u) {
+      var r = await fetch(u, { signal: AbortSignal.timeout(15000) });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var j = await r.json();
+      if (!j || j.error || !j.states) throw new Error('Invalid JSON structure');
+      return j;
+    }));
 
     var states = json.states || [];
     var cur = new Set();
