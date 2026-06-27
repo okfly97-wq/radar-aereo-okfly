@@ -669,11 +669,27 @@ window._sel = function(icao24) { selectAircraft(icao24, false); };
    ========================================================= */
 async function fetchAircraft() {
   setStatus('loading', 'Atualizando...');
-  var url = '/api/opensky?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin
-           + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax;
+  var targetUrl = 'https://opensky-network.org/api/states/all?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax;
+  
+  var urls = [
+    'https://corsproxy.io/?' + encodeURIComponent(targetUrl),
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl),
+    '/api/opensky?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax
+  ];
+
+  var res = null;
+  var lastErr = null;
+  for (var i = 0; i < urls.length; i++) {
+    try {
+      res = await fetch(urls[i], { signal: AbortSignal.timeout(12000) });
+      if (res.ok) break;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+
   try {
-    var res = await fetch(url, { signal: AbortSignal.timeout(25000) });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (!res || !res.ok) throw new Error('Falha em todos os proxies de conexão.');
     var json = await res.json();
     if (json.error) throw new Error(json.error);
 
