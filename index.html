@@ -308,7 +308,8 @@ try {
     throw new Error('Biblioteca Leaflet (L) não foi carregada pelo navegador da TV (Erro de CDN/SSL).');
   }
   map = L.map('map', { center:CENTER, zoom:ZOOM, zoomControl:true, attributionControl:true });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  // Usa o esquema protocol-relative (//) para as Smart TVs antigas superarem bloqueios de Handshake SSL e baixarem os basemaps nativamente
+  L.tileLayer('//{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution:'&copy;<a href="https://carto.com/">CARTO</a> &copy;<a href="https://osm.org/copyright">OSM</a>',
     subdomains:'abcd', maxZoom:19
   }).addTo(map);
@@ -990,6 +991,14 @@ function fetchAircraft() {
     console.warn('[Radar] fetch error:', err);
     setStatus('error', 'Sem dados — retentando...');
     resetCountdown();
+    // Exibe o depurador visual de rede na barra lateral da TV LG para entendermos por que as requisições falham
+    var listEl = document.getElementById('alist');
+    if (listEl) {
+      listEl.innerHTML = '<div style="padding:15px;color:#ff4060;font-family:monospace;font-size:12px;line-height:1.4;">'
+        + '<b>🚨 TV Network Blocked:</b><br>' + err.message + '<br>'
+        + '<b>Causa:</b> Handshake SSL ou regra CORS legada impedindo o fetch.<br>'
+        + '<b>UserAgent:</b> ' + navigator.userAgent + '</div>';
+    }
   });
 }
 
