@@ -62,7 +62,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 /* SIDE PANEL */
 #panel{
   position:fixed;top:70px;right:13px;z-index:1000;
-  width:158px;max-height:calc(100vh - 128px);
+  width:135px;max-height:calc(100vh - 128px);
   background:var(--panel);border:1px solid var(--border);border-radius:12px;
   backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
   overflow:hidden;display:flex;flex-direction:column;
@@ -112,9 +112,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 .empty-s .em{font-size:24px;margin-bottom:5px}
 
 /* Legend + auto badge */
-#legend{display:flex;align-items:center;justify-content:space-between;
-  padding:5px 6px;border-top:1px solid var(--border);flex-shrink:0}
-.leg-item{display:flex;align-items:center;gap:3px;font-size:8px;color:var(--muted)}
+#legend{display:flex;flex-direction:column;gap:4px;
+  padding:7px 10px;border-top:1px solid var(--border);flex-shrink:0}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:8.5px;color:var(--muted)}
 .leg-dot{width:5px;height:5px;border-radius:50%}
 #autobadge{
   display:flex;align-items:center;gap:4px;padding:5px 8px;
@@ -198,7 +198,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
   #sbadge { padding:3px 8px; font-size:9.5px; }
   
   #panel {
-    top:60px; bottom:auto; left:auto; right:8px; width:145px;
+    top:60px; bottom:auto; left:auto; right:8px; width:128px;
     max-height:calc(100vh - 112px); border-radius:10px;
     box-shadow:0 8px 24px rgba(0,0,0,0.85);
   }
