@@ -693,9 +693,15 @@ function setCycleBar(frac) {
 
 function getVisibleEntries() {
   var bounds = map.getBounds();
-  return Object.values(markers).filter(function(e){
-    return bounds.contains(e.marker.getLatLng());
-  });
+  var arr = [];
+  for (var k in markers) {
+    if (Object.prototype.hasOwnProperty.call(markers, k)) {
+      if (bounds.contains(markers[k].marker.getLatLng())) {
+        arr.push(markers[k]);
+      }
+    }
+  }
+  return arr;
 }
 
 function advanceCycle() {
@@ -801,8 +807,8 @@ function fetchWithTimeout(url, ms) {
 /* =========================================================
    FETCH FROM PROXY
    ========================================================= */
-async function fetchAircraft() {
-  console.log('[Radar] Executando busca v3.6 (Smart TV Mode)...');
+function fetchAircraft() {
+  console.log('[Radar] Executando busca v3.7 (LG Smart TV Universal Mode)...');
   setStatus('loading', 'Atualizando...');
   var openskyUrl = 'https://opensky-network.org/api/states/all?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax;
   var adsbLolUrl = 'https://api.adsb.lol/v2/lat/-14/lon/-53/dist/2000'; // Raio de 2000 NM (cobre todo o Brasil)
@@ -819,12 +825,11 @@ async function fetchAircraft() {
     { type: 'raw',           url: 'https://radar-aereo-okfly.onrender.com/api/opensky?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax }
   ];
 
-  try {
-    // Dispara as requisições em paralelo. O mais rápido e válido vence!
-    var data = await Promise.any(reqs.map(async function(item) {
-      console.log('[Radar] Disparando requisição:', item.url);
-      var r = await fetchWithTimeout(item.url, 15000);
-      var j = await r.json();
+  // Dispara as requisicoes em paralelo usando Promise vanilla sem async/await para suporte em Smart TV LG WebOS
+  var promises = reqs.map(function(item) {
+    return fetchWithTimeout(item.url, 15000).then(function(r) {
+      return r.json();
+    }).then(function(j) {
       if ((item.type === 'jsonp' || item.type === 'jsonp_adsblol') && j.contents) {
         j = JSON.parse(j.contents);
       }
@@ -837,8 +842,10 @@ async function fetchAircraft() {
         console.log('[Radar] SUCESSO VITÓRIA com OpenSky via:', item.url);
         return { type: 'opensky', list: j.states };
       }
-    }));
+    });
+  });
 
+  Promise.any(promises).then(function(data) {
     var parsed = [];
     var cur = new Set();
 
@@ -954,12 +961,13 @@ async function fetchAircraft() {
     setStatus('ok', total + ' aeronaves');
     renderList();
     flashScan();
+    resetCountdown();
 
-  } catch (err) {
+  }).catch(function(err) {
     console.warn('[Radar] fetch error:', err);
     setStatus('error', 'Sem dados — retentando...');
-  }
-  resetCountdown();
+    resetCountdown();
+  });
 }
 
 /* =========================================================
@@ -967,12 +975,14 @@ async function fetchAircraft() {
    ========================================================= */
 function animateAircraft() {
   var now = Date.now();
-  Object.values(markers).forEach(function(e) {
+  for (var k in markers) {
+    if (!Object.prototype.hasOwnProperty.call(markers, k)) continue;
+    var e = markers[k];
     var d = e.data;
-    if (d.on_ground || d.velocity == null || d.true_track == null || d.velocity <= 0) return;
+    if (d.on_ground || d.velocity == null || d.true_track == null || d.velocity <= 0) continue;
     
     // Se o avião não recebe dados reais há mais de 60 segundos, cessa a animação
-    if (now - e.lastUpdate > 60000) return;
+    if (now - e.lastUpdate > 60000) continue;
 
     var dt = 0.2; // 200ms em segundos
     var dist = d.velocity * dt; // Metros percorridos neste frame
@@ -983,7 +993,7 @@ function animateAircraft() {
     e.currentLat += dLat;
     e.currentLng += dLng;
     e.marker.setLatLng([e.currentLat, e.currentLng]);
-  });
+  }
 }
 
 /* =========================================================
@@ -1058,19 +1068,19 @@ var weatherLayer = null;
 function checkWeatherLayer() {
   if (!weatherLayer) return;
   var z = map.getZoom();
-  // Se o zoom for maior que 10, remove a camada meteorologica do DOM desacoplando fisicamente
-  if (z > 10) {
+  // Se o zoom for maior que 6 (a partir do 4º clique na Smart TV / Widescreen), remove a camada meteorologica do DOM
+  if (z > 6) {
     if (map.hasLayer(weatherLayer)) map.removeLayer(weatherLayer);
   } else {
     if (!map.hasLayer(weatherLayer)) map.addLayer(weatherLayer);
   }
 }
 
-async function initWeatherLayer() {
-  try {
-    console.log('[Radar] Buscando dados de radar meteorologico (REDEMET / RainViewer)...');
-    var res = await fetchWithTimeout('https://api.rainviewer.com/public/weather-maps.json', 10000);
-    var data = await res.json();
+function initWeatherLayer() {
+  console.log('[Radar] Buscando dados de radar meteorologico (REDEMET / RainViewer)...');
+  fetchWithTimeout('https://api.rainviewer.com/public/weather-maps.json', 10000).then(function(res) {
+    return res.json();
+  }).then(function(data) {
     if (data && data.radar && data.radar.past && data.radar.past.length > 0) {
       // Pega o timestamp mais recente (o ultimo da lista)
       var last = data.radar.past[data.radar.past.length - 1];
@@ -1080,15 +1090,15 @@ async function initWeatherLayer() {
       if (weatherLayer && map.hasLayer(weatherLayer)) map.removeLayer(weatherLayer);
       weatherLayer = L.tileLayer(tileUrl, {
         opacity: 0.55, // Transparencia elegante de 55% para nao ofuscar as aeronaves
-        maxNativeZoom: 10, // Evita requisicoes sem cobertura
-        maxZoom: 10,       // Esconde a camada no Zoom > 10
+        maxNativeZoom: 6, // Evita requisicoes sem cobertura
+        maxZoom: 6,       // Esconde a camada apos o 4º clique (Zoom > 6)
         attribution: '&copy; RainViewer / REDEMET'
       });
       checkWeatherLayer();
     }
-  } catch(e) {
+  }).catch(function(e) {
     console.warn('[Radar] Erro ao carregar meteorologia:', e);
-  }
+  });
 }
 
 /* =========================================================
