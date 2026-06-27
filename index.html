@@ -62,7 +62,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 /* SIDE PANEL */
 #panel{
   position:fixed;top:70px;right:13px;z-index:1000;
-  width:284px;max-height:calc(100vh - 128px);
+  width:215px;max-height:calc(100vh - 128px);
   background:var(--panel);border:1px solid var(--border);border-radius:12px;
   backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
   overflow:hidden;display:flex;flex-direction:column;
@@ -161,7 +161,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 .leaflet-control-attribution a{color:#3a4a5a!important}
 
 /* POPUP */
-.pu{padding:3px;min-width:196px}
+.pu{padding:3px;min-width:160px}
 .pu-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid var(--border)}
 .pu-icon{width:28px;height:28px;flex-shrink:0}
 .pu-cs{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--cyan)}
@@ -198,9 +198,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
   #sbadge { padding:3px 8px; font-size:9.5px; }
   
   #panel {
-    top:auto; bottom:48px; left:10px; right:10px; width:auto;
-    max-height:38vh; border-radius:12px;
-    box-shadow:0 -10px 30px rgba(0,0,0,0.85);
+    top:60px; bottom:auto; left:auto; right:8px; width:195px;
+    max-height:calc(100vh - 112px); border-radius:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.85);
   }
   #botbar { height:40px; padding:0 10px; }
   .binfo { gap:10px; font-size:9.5px; }
@@ -535,8 +535,7 @@ function buildPopup(d) {
     + '<div class="pu-head">' + popupSvg(cat)
     + '<div><div class="pu-cs">' + cs + '</div>'
     + '<div class="pu-type">' + (CAT_LABEL[cat] || 'Aeronave') + '</div></div></div>'
-    + row('ICAO24',    d.icao24 || 'N/A', '')
-    + row('País',      d.origin_country || 'N/A', '')
+    + row('Matrícula', d.origin_country || 'N/A', '')
     + row('Status',    gnd, 'a')
     + row('Altitude',  altFt + ' / ' + altM, 'g')
     + row('Velocidade',spd, '')
@@ -739,7 +738,6 @@ function renderList() {
         + '<span class="aci-sub">' + (d.origin_country || 'Desconhecido') + '</span>'
       + '</div>'
       + '<div class="aci-r">'
-        + '<span class="aci-alt">' + ft + '</span>'
         + '<span class="aci-spd">' + spd + '</span>'
       + '</div>'
     + '</div>';
