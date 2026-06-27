@@ -708,7 +708,10 @@ function advanceCycle() {
   if (!autoMode) return;
   var vis = getVisibleEntries();
   if (vis.length === 0) return;
-  var idx = vis.findIndex(function(e){ return e.data.icao24 === selIcao; });
+  var idx = -1;
+  for (var i = 0; i < vis.length; i++) {
+    if (vis[i].data.icao24 === selIcao) { idx = i; break; }
+  }
   idx = (idx + 1) % vis.length;
   selectAircraft(vis[idx].data.icao24, true);
 }
@@ -847,7 +850,8 @@ function fetchAircraft() {
 
   Promise.any(promises).then(function(data) {
     var parsed = [];
-    var cur = new Set();
+    var cur = {}; // Usa Object simples ES5 no lugar de Set!
+    var curSize = 0;
 
     if (data.type === 'adsblol') {
       parsed = data.list.map(function(s) {
@@ -887,7 +891,7 @@ function fetchAircraft() {
 
     parsed.forEach(function(d) {
       var id = d.icao24;
-      cur.add(id);
+      if (!cur[id]) { cur[id] = true; curSize++; }
       addHist(id, d.latitude, d.longitude);
 
       // Refresh track if selected
@@ -904,8 +908,10 @@ function fetchAircraft() {
           e.apiLat = d.latitude;
           e.apiLng = d.longitude;
           e.lastUpdate = Date.now();
-          // Se a divergencia for > 600 metros ou se estiver no solo, ressincroniza
-          var distDiff = Math.hypot(e.currentLat - d.latitude, e.currentLng - d.longitude) * 111132;
+          // Substitui Math.hypot por Math.sqrt pitagórico clássico ES5
+          var dLat = e.currentLat - d.latitude;
+          var dLng = e.currentLng - d.longitude;
+          var distDiff = Math.sqrt(dLat * dLat + dLng * dLng) * 111132;
           if (d.on_ground || distDiff > 600) {
             e.currentLat = d.latitude;
             e.currentLng = d.longitude;
@@ -946,17 +952,19 @@ function fetchAircraft() {
     });
 
     // Remove aircraft no longer in data
-    Object.keys(markers).forEach(function(id) {
-      if (!cur.has(id)) {
-        map.removeLayer(markers[id].marker);
-        delete markers[id];
-        hideTrack(id);
-        if (posHist[id]) delete posHist[id];
-        if (id === selIcao) { selIcao = null; map.closePopup(); }
+    for (var mId in markers) {
+      if (Object.prototype.hasOwnProperty.call(markers, mId)) {
+        if (!cur[mId]) {
+          map.removeLayer(markers[mId].marker);
+          delete markers[mId];
+          hideTrack(mId);
+          if (posHist[mId]) delete posHist[mId];
+          if (mId === selIcao) { selIcao = null; map.closePopup(); }
+        }
       }
-    });
+    }
 
-    var total = cur.size;
+    var total = curSize;
     document.getElementById('v-total').textContent = total;
     setStatus('ok', total + ' aeronaves');
     renderList();
@@ -1025,11 +1033,16 @@ function resetCountdown() {
   }, 1000);
 }
 
+function pad2(val) {
+  var s = String(val);
+  return s.length < 2 ? '0' + s : s;
+}
+
 function updateClock() {
   var n = new Date();
-  var h = String(n.getHours()).padStart(2,'0');
-  var m = String(n.getMinutes()).padStart(2,'0');
-  var s = String(n.getSeconds()).padStart(2,'0');
+  var h = pad2(n.getHours());
+  var m = pad2(n.getMinutes());
+  var s = pad2(n.getSeconds());
   var el = document.getElementById('clock');
   if (el) el.textContent = h + ':' + m + ':' + s;
 }
