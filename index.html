@@ -1058,8 +1058,8 @@ var weatherLayer = null;
 function checkWeatherLayer() {
   if (!weatherLayer) return;
   var z = map.getZoom();
-  // Se o zoom for maior que 8 (a partir do 4º clique de aproximacao), remove a camada meteorologica do DOM
-  if (z > 8) {
+  // Se o zoom for maior que 10, remove a camada meteorologica do DOM desacoplando fisicamente
+  if (z > 10) {
     if (map.hasLayer(weatherLayer)) map.removeLayer(weatherLayer);
   } else {
     if (!map.hasLayer(weatherLayer)) map.addLayer(weatherLayer);
@@ -1080,8 +1080,8 @@ async function initWeatherLayer() {
       if (weatherLayer && map.hasLayer(weatherLayer)) map.removeLayer(weatherLayer);
       weatherLayer = L.tileLayer(tileUrl, {
         opacity: 0.55, // Transparencia elegante de 55% para nao ofuscar as aeronaves
-        maxNativeZoom: 8, // Evita requisicoes sem cobertura
-        maxZoom: 8,       // Esconde a camada apos o 4º clique de zoom (Zoom > 8)
+        maxNativeZoom: 10, // Evita requisicoes sem cobertura
+        maxZoom: 10,       // Esconde a camada no Zoom > 10
         attribution: '&copy; RainViewer / REDEMET'
       });
       checkWeatherLayer();
