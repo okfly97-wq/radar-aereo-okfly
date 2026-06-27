@@ -17,8 +17,9 @@ import time
 PORT = int(os.environ.get("PORT", 9090))
 DIR  = os.path.dirname(os.path.abspath(__file__))
 
-# ── In-Memory Cache (Evita timeouts e bloqueios da OpenSky) ──
-CACHE = {"time": 0, "data": b""}
+# ── In-Memory Cache (Evita timeouts e bloqueios da OpenSky e ADSB.lol) ──
+CACHE      = {"time": 0, "data": b""}
+CACHE_ADSB = {"time": 0, "data": b""}
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -33,15 +34,55 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header("Connection", "keep-alive")
         self.end_headers()
 
-    # ── Proxy OpenSky ────────────────────────────────────────
+    # ── Proxy Rotas ────────────────────────────────────────
     def do_GET(self):
         try:
-            if self.path.startswith("/api/opensky"):
+            if self.path.startswith("/api/adsblol"):
+                self._proxy_adsblol()
+            elif self.path.startswith("/api/opensky"):
                 self._proxy_opensky()
             else:
                 self._serve_file()
         except Exception:
             traceback.print_exc()
+
+    def _proxy_adsblol(self):
+        global CACHE_ADSB
+        # 1. Retorna do cache se tiver menos de 10 segundos
+        if CACHE_ADSB["data"] and (time.time() - CACHE_ADSB["time"] < 10):
+            body = CACHE_ADSB["data"]
+            code = 200
+        else:
+            try:
+                req = urllib.request.Request(
+                    "https://api.adsb.lol/v2/lat/-14/lon/-53/dist/2000",
+                    headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+                )
+                with urllib.request.urlopen(req, timeout=15) as r:
+                    body = r.read()
+                code = 200
+                CACHE_ADSB["data"] = body
+                CACHE_ADSB["time"] = time.time()
+            except Exception as ex:
+                print("[adsblol-error]", ex)
+                if CACHE_ADSB["data"]:
+                    print("[adsblol-fallback] Usando cache antigo de ADSB.lol")
+                    body = CACHE_ADSB["data"]
+                    code = 200
+                else:
+                    body = json.dumps({"error": str(ex)}).encode("utf-8")
+                    code = 502
+
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "*")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Connection", "keep-alive")
+        self.end_headers()
+        self.wfile.write(body)
+        self.wfile.flush()
 
     def _proxy_opensky(self):
         global CACHE

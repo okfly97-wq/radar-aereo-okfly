@@ -697,12 +697,14 @@ async function fetchAircraft() {
   var adsbLolUrl = 'https://api.adsb.lol/v2/lat/-14/lon/-53/dist/2000'; // Raio de 2000 NM (cobre todo o Brasil)
 
   var reqs = [
-    { type: 'adsblol', url: adsbLolUrl }, // 1. Tenta ADSB.lol (Gratuito, sem rate limit 429 e com modelo do avião!)
-    { type: 'raw',     url: 'https://corsproxy.io/?' + encodeURIComponent(openskyUrl) },
-    { type: 'raw',     url: 'https://corsproxy.io/?' + openskyUrl },
-    { type: 'jsonp',   url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(openskyUrl) },
-    { type: 'raw',     url: openskyUrl },
-    { type: 'raw',     url: 'https://radar-aereo-okfly.onrender.com/api/opensky?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax }
+    { type: 'adsblol',       url: 'https://radar-aereo-okfly.onrender.com/api/adsblol' }, // 1. Tenta nosso proxy Render com Cache (1ms, infalível)
+    { type: 'jsonp_adsblol', url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(adsbLolUrl) }, // 2. Tenta via AllOrigins /get wrapper
+    { type: 'adsblol',       url: 'https://corsproxy.io/?' + encodeURIComponent(adsbLolUrl) }, // 3. Tenta via corsproxy
+    { type: 'adsblol',       url: adsbLolUrl }, // 4. Tenta direto
+    { type: 'raw',           url: 'https://corsproxy.io/?' + encodeURIComponent(openskyUrl) },
+    { type: 'jsonp',         url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(openskyUrl) },
+    { type: 'raw',           url: openskyUrl },
+    { type: 'raw',           url: 'https://radar-aereo-okfly.onrender.com/api/opensky?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax }
   ];
 
   try {
@@ -711,10 +713,10 @@ async function fetchAircraft() {
       var r = await fetch(item.url, { signal: AbortSignal.timeout(15000) });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       var j = await r.json();
-      if (item.type === 'jsonp' && j.contents) {
+      if ((item.type === 'jsonp' || item.type === 'jsonp_adsblol') && j.contents) {
         j = JSON.parse(j.contents);
       }
-      if (item.type === 'adsblol') {
+      if (item.type === 'adsblol' || item.type === 'jsonp_adsblol') {
         if (!j || !j.ac) throw new Error('Invalid ADSB.lol structure');
         return { type: 'adsblol', list: j.ac };
       } else {
