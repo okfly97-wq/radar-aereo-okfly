@@ -627,14 +627,15 @@ function selectAircraft(icao24, isAuto) {
   renderList();
 
   if (!isAuto) {
-    // User selected — pause auto-cycle
+    // User selected — pause auto-cycle for 1 minute
     autoMode = false;
     updateAutoBadge();
     clearTimeout(autoResumeT);
     autoResumeT = setTimeout(function(){
       autoMode = true;
       updateAutoBadge();
-    }, 30000);
+      advanceCycle();
+    }, 60000);
   }
 }
 
@@ -647,9 +648,15 @@ function deselect() {
     map.closePopup();
     renderList();
   }
-  clearTimeout(autoResumeT);
-  autoMode = true;
+  // Se o usuario clica no mapa vazio, pausa o ciclo automatico por 1 minuto para ele explorar livremente
+  autoMode = false;
   updateAutoBadge();
+  clearTimeout(autoResumeT);
+  autoResumeT = setTimeout(function(){
+    autoMode = true;
+    updateAutoBadge();
+    advanceCycle();
+  }, 60000);
 }
 
 function updateAutoBadge() {
@@ -660,7 +667,7 @@ function updateAutoBadge() {
     txt.textContent = 'Ciclo automático ativo';
   } else {
     badge.classList.add('paused');
-    txt.textContent = 'Manual — retoma em 30s';
+    txt.textContent = 'Manual — retoma em 1 min';
   }
 }
 
