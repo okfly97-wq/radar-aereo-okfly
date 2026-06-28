@@ -30,6 +30,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
   color:rgba(0,212,255,0.45);font-size:6px;font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:0}
 .airway-label-reha{background:transparent!important;border:none!important;box-shadow:none!important;padding:0!important;margin:0!important;
   color:rgba(255,179,64,0.55);font-size:6px;font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:0}
+body.hide-airway-labels .airway-label{display:none!important}
+body.hide-reha-labels .airway-label-reha{display:none!important}
 #vignette{position:fixed;inset:0;pointer-events:none;z-index:1;
   background:radial-gradient(ellipse at center,transparent 45%,rgba(0,2,10,0.65) 100%)}
 #scanring{position:fixed;inset:0;pointer-events:none;z-index:2}
@@ -404,6 +406,25 @@ try {
   L.control.layers(null, overlayMaps, { position: 'bottomleft', collapsed: true }).addTo(map);
 
   map.zoomControl.setPosition('bottomleft');
+
+  // Controle dinâmico de exibição dos tooltips baseado em zoom
+  // ZOOM inicial é 4. +3 cliques = zoom >= 7 (Airways), +6 cliques = zoom >= 10 (REHA)
+  function updateTooltipVisibility() {
+    var currentZoom = map.getZoom();
+    if (currentZoom >= (ZOOM + 3)) {
+      document.body.classList.remove('hide-airway-labels');
+    } else {
+      document.body.classList.add('hide-airway-labels');
+    }
+
+    if (currentZoom >= (ZOOM + 6)) {
+      document.body.classList.remove('hide-reha-labels');
+    } else {
+      document.body.classList.add('hide-reha-labels');
+    }
+  }
+  map.on('zoomend', updateTooltipVisibility);
+  updateTooltipVisibility();
 } catch (mapErr) {
   console.error('[Radar] Fatal Map Error:', mapErr);
   var errBox = document.createElement('div');
