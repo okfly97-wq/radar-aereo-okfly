@@ -362,7 +362,7 @@ try {
           style: function() { return { color: '#00d4ff', weight: 1.2, opacity: 0.3, dashArray: '8 5' }; },
           onEachFeature: function(feature, layer) {
             layer.bindTooltip(feature.properties.name, {
-              permanent: false, direction: 'center', className: 'airway-label'
+              permanent: true, direction: 'center', className: 'airway-label'
             });
           }
         }).addTo(lowerLayer);
@@ -372,7 +372,7 @@ try {
           style: function() { return { color: '#4488ff', weight: 1.5, opacity: 0.3 }; },
           onEachFeature: function(feature, layer) {
             layer.bindTooltip(feature.properties.name, {
-              permanent: false, direction: 'center', className: 'airway-label'
+              permanent: true, direction: 'center', className: 'airway-label'
             });
           }
         }).addTo(upperLayer);
@@ -382,7 +382,7 @@ try {
           style: function() { return { color: '#ffb340', weight: 1.8, opacity: 0.4, dashArray: '4 4' }; },
           onEachFeature: function(feature, layer) {
             layer.bindTooltip(feature.properties.name, {
-              permanent: false, direction: 'center', className: 'airway-label-reha'
+              permanent: true, direction: 'center', className: 'airway-label-reha'
             });
           }
         }).addTo(rehaLayer);
