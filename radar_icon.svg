@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">
+  <style>
+    @keyframes sweep { to { transform: rotate(360deg); } }
+    .s { transform-origin: 16px 16px; animation: sweep 4s linear infinite; }
+  </style>
+  <defs>
+    <linearGradient id="rg" x1="16" y1="2" x2="30" y2="16" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00d4ff" stop-opacity=".9"/>
+      <stop offset="100%" stop-color="#00d4ff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <circle cx="16" cy="16" r="14" stroke="#00d4ff" stroke-opacity=".25" stroke-width="1.5" fill="none"/>
+  <circle cx="16" cy="16" r="9"  stroke="#00d4ff" stroke-opacity=".25" stroke-width="1.5" fill="none"/>
+  <circle cx="16" cy="16" r="4"  stroke="#00d4ff" stroke-opacity=".25" stroke-width="1.5" fill="none"/>
+  <circle cx="16" cy="16" r="1.6" fill="#00d4ff"/>
+  <line x1="16" y1="16" x2="16" y2="2" stroke="#00d4ff" stroke-opacity=".3" stroke-width="1"/>
+  <line x1="16" y1="16" x2="30" y2="16" stroke="#00d4ff" stroke-opacity=".3" stroke-width="1"/>
+  <g class="s">
+    <path d="M16 16 L16 2 A14 14 0 0 1 30 16 Z" fill="url(#rg)"/>
+  </g>
+</svg>
