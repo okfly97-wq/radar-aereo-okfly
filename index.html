@@ -48,11 +48,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 #map{position:fixed;inset:0;z-index:0}
 .airway-label{background:transparent!important;border:none!important;box-shadow:none!important;padding:0!important;margin:0!important;
   color:rgba(0,212,255,0.45);font-size:6px;font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:0}
+.airway-label-upper{background:transparent!important;border:none!important;box-shadow:none!important;padding:0!important;margin:0!important;
+  color:rgba(68,136,255,0.90);font-size:6.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0;text-shadow:0 0 4px rgba(0,119,255,0.8)}
 .airway-label-reha{background:transparent!important;border:none!important;box-shadow:none!important;padding:0!important;margin:0!important;
   color:rgba(255,179,64,0.55);font-size:6px;font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:0}
 .airway-label-rea{background:transparent!important;border:none!important;box-shadow:none!important;padding:0!important;margin:0!important;
   color:rgba(0,255,157,0.55);font-size:6px;font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:0}
-body.hide-airway-labels .airway-label{display:none!important}
+body.hide-airway-labels .airway-label, body.hide-airway-labels .airway-label-upper{display:none!important}
 body.hide-reha-labels .airway-label-reha, body.hide-rea-labels .airway-label-rea{display:none!important}
 #vignette{position:fixed;inset:0;pointer-events:none;z-index:1;
   background:radial-gradient(ellipse at center,transparent 45%,rgba(0,2,10,0.65) 100%)}
@@ -372,7 +374,7 @@ try {
 
   // Carregar airways_brazil.json via XMLHttpRequest com Cache Buster Atualizado
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', 'airways_brazil.json?v=202606281555', true);
+  xhr.open('GET', 'airways_brazil.json?v=202606281628', true);
   xhr.onreadystatechange = function() {
     if (xhr.readyState === 4 && xhr.status === 200) {
       try {
@@ -386,9 +388,9 @@ try {
         var reha  = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'REHA'; }) };
         var rea   = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'REA'; }) };
 
-        // Aerovias Inferiores (W) - Linhas tracejadas cyan 30%
+        // Aerovias Inferiores (W) - Linhas tracejadas cyan 25%
         L.geoJSON(lower, {
-          style: function() { return { color: '#00d4ff', weight: 1.2, opacity: 0.3, dashArray: '8 5' }; },
+          style: function() { return { color: '#00d4ff', weight: 1.2, opacity: 0.25, dashArray: '8 5' }; },
           onEachFeature: function(feature, layer) {
             layer.bindTooltip(feature.properties.name, {
               permanent: true, direction: 'center', className: 'airway-label'
@@ -396,12 +398,12 @@ try {
           }
         }).addTo(lowerLayer);
 
-        // Aerovias Superiores (UW) - Linhas sólidas azuis 30%
+        // Aerovias Superiores (UW) - Linhas sólidas azuis vibrantes 75% (Destaque Premium)
         L.geoJSON(upper, {
-          style: function() { return { color: '#4488ff', weight: 1.5, opacity: 0.3 }; },
+          style: function() { return { color: '#2a7fff', weight: 2.5, opacity: 0.75 }; },
           onEachFeature: function(feature, layer) {
             layer.bindTooltip(feature.properties.name, {
-              permanent: true, direction: 'center', className: 'airway-label'
+              permanent: true, direction: 'center', className: 'airway-label-upper'
             });
           }
         }).addTo(upperLayer);
