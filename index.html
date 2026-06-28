@@ -50,8 +50,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
   color:rgba(0,212,255,0.45);font-size:6px;font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:0}
 .airway-label-reha{background:transparent!important;border:none!important;box-shadow:none!important;padding:0!important;margin:0!important;
   color:rgba(255,179,64,0.55);font-size:6px;font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:0}
+.airway-label-rea{background:transparent!important;border:none!important;box-shadow:none!important;padding:0!important;margin:0!important;
+  color:rgba(0,255,157,0.55);font-size:6px;font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:0}
 body.hide-airway-labels .airway-label{display:none!important}
-body.hide-reha-labels .airway-label-reha{display:none!important}
+body.hide-reha-labels .airway-label-reha, body.hide-rea-labels .airway-label-rea{display:none!important}
 #vignette{position:fixed;inset:0;pointer-events:none;z-index:1;
   background:radial-gradient(ellipse at center,transparent 45%,rgba(0,2,10,0.65) 100%)}
 #scanring{position:fixed;inset:0;pointer-events:none;z-index:2}
@@ -366,10 +368,11 @@ try {
   var lowerLayer = L.layerGroup().addTo(map);
   var upperLayer = L.layerGroup().addTo(map);
   var rehaLayer  = L.layerGroup().addTo(map);
+  var reaLayer   = L.layerGroup().addTo(map);
 
-  // Carregar airways_brazil.json via XMLHttpRequest (compatível com Smart TVs) com Cache Buster
+  // Carregar airways_brazil.json via XMLHttpRequest com Cache Buster Atualizado
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', 'airways_brazil.json?v=202606281535', true);
+  xhr.open('GET', 'airways_brazil.json?v=202606281536', true);
   xhr.onreadystatechange = function() {
     if (xhr.readyState === 4 && xhr.status === 200) {
       try {
@@ -381,6 +384,7 @@ try {
         var lower = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'L'; }) };
         var upper = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'H'; }) };
         var reha  = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'REHA'; }) };
+        var rea   = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'REA'; }) };
 
         // Aerovias Inferiores (W) - Linhas tracejadas cyan 30%
         L.geoJSON(lower, {
@@ -412,7 +416,17 @@ try {
           }
         }).addTo(rehaLayer);
 
-        console.log('[Radar] Renderizadas: ' + lower.features.length + ' Lower, ' + upper.features.length + ' Upper, ' + reha.features.length + ' REHA');
+        // REA (Aviões SP/RJ/BR) - Linhas tracejadas verde cibernético 40%
+        L.geoJSON(rea, {
+          style: function() { return { color: '#00ff9d', weight: 1.8, opacity: 0.4, dashArray: '4 4' }; },
+          onEachFeature: function(feature, layer) {
+            layer.bindTooltip(feature.properties.name, {
+              permanent: true, direction: 'center', className: 'airway-label-rea'
+            });
+          }
+        }).addTo(reaLayer);
+
+        console.log('[Radar] Renderizadas: ' + lower.features.length + ' Lower, ' + upper.features.length + ' Upper, ' + reha.features.length + ' REHA, ' + rea.features.length + ' REA');
       } catch (e) {
         console.error('[Radar] Erro ao processar airways_brazil.json:', e);
       }
@@ -422,16 +436,17 @@ try {
 
   // --- CONTROLE DE CAMADAS PARA LIGAR/DESLIGAR AEROVIAS ---
   var overlayMaps = {
-    "\u2708\ufe0f Aerovias Inferiores (Z) - 75 rotas": lowerLayer,
-    "\ud83d\udeeb Aerovias Superiores (UZ, UY, UQ, UT, UM, UN) - 83 rotas": upperLayer,
-    "\ud83d\ude81 REHA Helic\u00f3pteros (SP/RJ) - 16 rotas": rehaLayer
+    "✈️ Aerovias Inferiores (Z) - 75 rotas": lowerLayer,
+    "🛫 Aerovias Superiores (UZ, UY, UQ, UT, UM, UN) - 83 rotas": upperLayer,
+    "🚁 REHA Helicópteros (SP/RJ) - 16 rotas": rehaLayer,
+    "🛩️ REA Aviões (SP/RJ/BR) - 13 rotas": reaLayer
   };
   L.control.layers(null, overlayMaps, { position: 'bottomleft', collapsed: true }).addTo(map);
 
   map.zoomControl.setPosition('bottomleft');
 
   // Controle dinâmico de exibição dos tooltips baseado em zoom
-  // ZOOM inicial é 4. +3 cliques = zoom >= 7 (Airways), +6 cliques = zoom >= 10 (REHA)
+  // ZOOM inicial é 4. +3 cliques = zoom >= 7 (Airways), +6 cliques = zoom >= 10 (REHA e REA)
   function updateTooltipVisibility() {
     var currentZoom = map.getZoom();
     if (currentZoom >= (ZOOM + 3)) {
@@ -441,9 +456,9 @@ try {
     }
 
     if (currentZoom >= (ZOOM + 6)) {
-      document.body.classList.remove('hide-reha-labels');
+      document.body.classList.remove('hide-reha-labels', 'hide-rea-labels');
     } else {
-      document.body.classList.add('hide-reha-labels');
+      document.body.classList.add('hide-reha-labels', 'hide-rea-labels');
     }
   }
   map.on('zoomend', updateTooltipVisibility);

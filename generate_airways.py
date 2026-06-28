@@ -315,6 +315,25 @@ REHA = {
     "REHA RJ-08": [(-22.91, -43.17), (-22.91, -43.22), (-22.91, -43.27), (-22.91, -43.32)],
 }
 
+# =========================================================
+# REA - Rotas Especiais de Aviões (SP, RJ e BR/Brasília)
+# =========================================================
+REA = {
+    "REA SP-01 (Cotia)":   [(-23.58, -46.85), (-23.55, -46.75), (-23.52, -46.65)],
+    "REA SP-02 (Perus)":   [(-23.35, -46.75), (-23.42, -46.70), (-23.50, -46.65)],
+    "REA SP-03 (Mogi)":    [(-23.52, -46.65), (-23.51, -46.50), (-23.52, -46.35)],
+    "REA SP-04 (Moréia)":  [(-23.63, -46.66), (-23.75, -46.65), (-23.85, -46.60)],
+    "REA SP-05 (Jundiaí)": [(-23.18, -46.88), (-23.35, -46.75), (-23.50, -46.65)],
+    "REA RJ-01 (Litoral)": [(-22.99, -43.36), (-22.98, -43.22), (-22.91, -43.16)],
+    "REA RJ-02 (Afonsos)": [(-22.88, -43.38), (-22.88, -43.30), (-22.91, -43.16)],
+    "REA RJ-03 (Lagos)":   [(-22.91, -43.16), (-22.88, -43.00), (-22.85, -42.80)],
+    "REA RJ-04 (Serra)":   [(-22.91, -43.16), (-22.65, -43.17), (-22.50, -43.18)],
+    "REA BR-01 (Norte)":   [(-15.60, -47.92), (-15.75, -47.92), (-15.87, -47.92)],
+    "REA BR-02 (Sul)":     [(-16.15, -47.92), (-16.00, -47.92), (-15.87, -47.92)],
+    "REA BR-03 (Leste)":   [(-15.87, -47.60), (-15.87, -47.75), (-15.87, -47.92)],
+    "REA BR-04 (Oeste)":   [(-15.87, -48.25), (-15.87, -48.10), (-15.87, -47.92)],
+}
+
 
 def build_geojson():
     features = []
@@ -344,13 +363,22 @@ def build_geojson():
             "properties": {"name": name, "type": "REHA"},
             "geometry": {"type": "LineString", "coordinates": coords}
         })
+        
+    # Build REA
+    for name, points in REA.items():
+        coords = [[lon, lat] for lat, lon in points]
+        features.append({
+            "type": "Feature",
+            "properties": {"name": name, "type": "REA"},
+            "geometry": {"type": "LineString", "coordinates": coords}
+        })
     
     return {"type": "FeatureCollection", "features": features}
 
 
 def main():
     print("=" * 60)
-    print("  GERADOR COMPLETO DE AEROVIAS BRASILEIRAS (UZ, UY, UQ, UT e Z)")
+    print("  GERADOR COMPLETO DE AEROVIAS E ROTAS REA/REHA (BRASIL)")
     print("  Baseado em fixos/VORs do AIP Brasil")
     print("=" * 60)
     
@@ -359,12 +387,14 @@ def main():
     lower = sum(1 for f in geojson["features"] if f["properties"]["type"] == "L")
     upper = sum(1 for f in geojson["features"] if f["properties"]["type"] == "H")
     reha  = sum(1 for f in geojson["features"] if f["properties"]["type"] == "REHA")
+    rea   = sum(1 for f in geojson["features"] if f["properties"]["type"] == "REA")
     total = len(geojson["features"])
     
     print(f"\n[RESULTADO]")
     print(f"  Aerovias Inferiores (Z):         {lower}")
     print(f"  Aerovias Superiores (UZ/UY/UQ/UT): {upper}")
     print(f"  REHA (Helicópteros):             {reha}")
+    print(f"  REA (Aviões SP/RJ/BR):           {rea}")
     print(f"  TOTAL:                           {total}")
     
     outpath = "airways_brazil.json"
