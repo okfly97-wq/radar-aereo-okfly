@@ -367,9 +367,9 @@ try {
   var upperLayer = L.layerGroup().addTo(map);
   var rehaLayer  = L.layerGroup().addTo(map);
 
-  // Carregar airways_brazil.json via XMLHttpRequest (compatível com Smart TVs)
+  // Carregar airways_brazil.json via XMLHttpRequest (compatível com Smart TVs) com Cache Buster
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', 'airways_brazil.json', true);
+  xhr.open('GET', 'airways_brazil.json?v=202606281535', true);
   xhr.onreadystatechange = function() {
     if (xhr.readyState === 4 && xhr.status === 200) {
       try {
