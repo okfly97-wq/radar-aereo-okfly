@@ -115,6 +115,15 @@ FIXES = {
     "ODVIN": (-2.50, -52.00), "TULAX": (-1.00, -53.50), "POXIM": (-10.00, -48.00), "IVBAL": (-8.00, -49.50),
     "DOMAX": (-6.00, -51.00), "FUGAL": (-4.00, -52.50), "MALBO": (-2.00, -54.00), "REBDO": (-11.50, -50.00),
     "IKBAL": (-10.00, -52.00), "NUTEX": (-8.50, -54.00), "OPVIM": (-7.00, -56.00), "DALAX": (-5.50, -57.50),
+
+    # === FIXOS OCEÂNICOS / CORREDORES UM661 e UN857 (DECEA ENRC H1) ===
+    "TIMVI": (-28.5407, -49.4806), # UN857 (RS/SC costa)
+    "DOKRO": (-26.2358, -46.4453), # UN857 (PR costa)
+    "FEITO": (-25.3951, -45.5343), # UN857 (SP costa)
+    "NEVNO": (-29.2864, -48.5535), # UM661 (RS/SC mar aberto)
+    "LOGIP": (-27.4500, -46.5000), # UM661 (SC mar aberto)
+    "ESKEK": (-26.3029, -45.4108), # UM661 (PR mar aberto)
+    "ANREL": (-25.2865, -44.2308), # UM661 (SP mar aberto)
 }
 
 # =========================================================
@@ -288,16 +297,18 @@ AIRWAYS = {
     "UT11": {"type": "H", "fixes": ["MAO", "MAVOD", "SBPV", "SBCY"]},
     "UT12": {"type": "H", "fixes": ["SBCY", "ESBAM", "SBBR"]},
 
-    # === AEROVIAS SUPERIORES (H - Upper / Famílias UM e UN) ===
-    "UM661_1": {"type": "H", "fixes": ["POA", "CWB"]},
-    "UM661_2": {"type": "H", "fixes": ["CWB", "SBKP"]},
-    "UM661_3": {"type": "H", "fixes": ["SBKP", "CGN"]},
-    "UM661_4": {"type": "H", "fixes": ["CGN", "VIT"]},
-    "UM661_5": {"type": "H", "fixes": ["VIT", "SSA"]},
-    "UM661_6": {"type": "H", "fixes": ["SSA", "REC"]},
-    "UM661_7": {"type": "H", "fixes": ["REC", "NAT"]},
-    "UN857_1": {"type": "H", "fixes": ["IGU", "CGR"]},
-    "UN857_2": {"type": "H", "fixes": ["CGR", "GYN"]},
+    # === AEROVIAS SUPERIORES (H - Upper / Famílias UM e UN - Corredores Oceânicos e Continentais) ===
+    # UM661: O grande corredor de mar aberto (POA -> RJ/ES -> Nordeste)
+    "UM661_1": {"type": "H", "fixes": ["POA", "NEVNO", "LOGIP", "ESKEK", "ANREL", "GIG"]},
+    "UM661_2": {"type": "H", "fixes": ["GIG", "CGN"]},
+    "UM661_3": {"type": "H", "fixes": ["CGN", "VIT"]},
+    "UM661_4": {"type": "H", "fixes": ["VIT", "SSA"]},
+    "UM661_5": {"type": "H", "fixes": ["SSA", "REC"]},
+    "UM661_6": {"type": "H", "fixes": ["REC", "NAT"]},
+
+    # UN857: O grande corredor costeiro (POA -> SBRJ/GIG -> GYN -> BSB -> Belém)
+    "UN857_1": {"type": "H", "fixes": ["POA", "TIMVI", "DOKRO", "FEITO", "SBRJ"]},
+    "UN857_2": {"type": "H", "fixes": ["SBRJ", "CGR", "GYN"]},
     "UN857_3": {"type": "H", "fixes": ["GYN", "BSB"]},
     "UN857_4": {"type": "H", "fixes": ["BSB", "THE"]},
     "UN857_5": {"type": "H", "fixes": ["THE", "SLZ"]},
