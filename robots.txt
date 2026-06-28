@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://radar.okfly.com.br/sitemap.xml
