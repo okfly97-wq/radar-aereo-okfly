@@ -289,8 +289,19 @@ AIRWAYS = {
     "UT12": {"type": "H", "fixes": ["SBCY", "ESBAM", "SBBR"]},
 
     # === AEROVIAS SUPERIORES (H - Upper / Famílias UM e UN) ===
-    "UM661": {"type": "H", "fixes": ["POA", "CWB", "SBKP", "CGN", "VIT", "SSA", "REC", "NAT"]},
-    "UN857": {"type": "H", "fixes": ["IGU", "CGR", "GYN", "BSB", "THE", "SLZ", "BEL"]},
+    "UM661_1": {"type": "H", "fixes": ["POA", "CWB"]},
+    "UM661_2": {"type": "H", "fixes": ["CWB", "SBKP"]},
+    "UM661_3": {"type": "H", "fixes": ["SBKP", "CGN"]},
+    "UM661_4": {"type": "H", "fixes": ["CGN", "VIT"]},
+    "UM661_5": {"type": "H", "fixes": ["VIT", "SSA"]},
+    "UM661_6": {"type": "H", "fixes": ["SSA", "REC"]},
+    "UM661_7": {"type": "H", "fixes": ["REC", "NAT"]},
+    "UN857_1": {"type": "H", "fixes": ["IGU", "CGR"]},
+    "UN857_2": {"type": "H", "fixes": ["CGR", "GYN"]},
+    "UN857_3": {"type": "H", "fixes": ["GYN", "BSB"]},
+    "UN857_4": {"type": "H", "fixes": ["BSB", "THE"]},
+    "UN857_5": {"type": "H", "fixes": ["THE", "SLZ"]},
+    "UN857_6": {"type": "H", "fixes": ["SLZ", "BEL"]},
 }
 
 # =========================================================
@@ -349,9 +360,10 @@ def build_geojson():
                 print(f"[WARN] Fix '{fix_name}' not found for airway {name}")
         
         if len(coords) >= 2:
+            clean_name = name.split("_")[0]
             features.append({
                 "type": "Feature",
-                "properties": {"name": name, "type": data["type"]},
+                "properties": {"name": clean_name, "type": data["type"]},
                 "geometry": {"type": "LineString", "coordinates": coords}
             })
     
