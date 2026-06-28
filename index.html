@@ -534,7 +534,32 @@ var cdTimer = null;
    ========================================================= */
 var AIRLINE_RE = /^(GLO|AZU|TAM|ONE|LAN|GOL|AAL|UAL|DAL|BAW|KLM|AFR|LUF|IBE|TAP|SWA|JBU|ACA|QFA|SIA|CPA|ETH|UAE|QTR|THA|GAL|VRG|AVA|SVA|PAL|JAL|ANA|TUR|MAU|KAL|DLH|BAV|AEL|RYR|EZY|WZZ|VLG|VKG|ATW|PTB|MRS|GND|ABX|FDX|UPS|DHL|TPA|SYA|EIN)/;
 
+function getHeliMatch(d) {
+  var fullText = [
+    d.callsign, d.icao24, d.t, d.type, d.icao_type, d.desc, d.origin_country, d.reg, d.registration
+  ].filter(Boolean).join(' ').toUpperCase();
+
+  if (/AS35|H125|EC50|ESQUILO/.test(fullText)) return { model:'Airbus AS350/H125 (Esquilo)', use:'Monomotor Leve / Policial, Utilitário, Táxi Aéreo', size:'light' };
+  if (/R44/.test(fullText))  return { model:'Robinson R44', use:'Monomotor Leve (Pistão) / Particular, Treinamento, Agro', size:'light' };
+  if (/R66/.test(fullText))  return { model:'Robinson R66', use:'Monomotor Leve (Turbina) / Executivo, Agropecuária', size:'light' };
+  if (/B407|BELL\s*407|407/.test(fullText) && !/BOEING/.test(fullText)) return { model:'Bell 407', use:'Monomotor Leve / Corporativo, Utilitário', size:'light' };
+  if (/B505|BELL\s*505|505/.test(fullText)) return { model:'Bell 505', use:'Monomotor Leve / Particular (Entrada)', size:'light' };
+  if (/A109|AW109/.test(fullText)) return { model:'Leonardo AW109', use:'Bimotor Leve / Executivo VIP', size:'light' };
+  if (/EC30|H130/.test(fullText)) return { model:'Airbus H130', use:'Monomotor Leve / Executivo VIP, Turismo', size:'light' };
+  if (/EC35|H135/.test(fullText)) return { model:'Airbus H135', use:'Bimotor Leve / Aeromédico, Policial', size:'light' };
+  if (/EC45|H145/.test(fullText)) return { model:'Airbus H145', use:'Bimotor Médio / Aeromédico, Policial, Executivo VIP', size:'medium' };
+  if (/A169|AW169/.test(fullText)) return { model:'Leonardo AW169', use:'Bimotor Médio / Aeromédico, Offshore, Executivo', size:'medium' };
+  if (/S76|S-76/.test(fullText))   return { model:'Sikorsky S-76', use:'Bimotor Médio / Offshore (Petróleo e Gás), Executivo', size:'medium' };
+  if (/AW39|A139|AW139/.test(fullText)) return { model:'Leonardo AW139', use:'Bimotor Médio / Offshore, Táxi Aéreo pesado', size:'medium' };
+  if (/S92|S-92/.test(fullText))   return { model:'Sikorsky S-92', use:'Bimotor Pesado / Offshore (Missões longas pré-sal)', size:'heavy' };
+  if (/EC25|H225|AS33|SUPER\s*PUMA/.test(fullText)) return { model:'Airbus H225 (Super Puma)', use:'Bimotor Pesado / Offshore (Missões longas pré-sal)', size:'heavy' };
+  
+  return null;
+}
+
 function categorize(d) {
+  if (getHeliMatch(d) != null) return 'helicopter';
+  
   var cs  = (d.callsign || '').trim().toUpperCase();
   var vel = d.velocity || 0;
   var alt = (d.geo_altitude != null ? d.geo_altitude : d.baro_altitude) || 0;
@@ -549,22 +574,8 @@ function categorize(d) {
    SVG ICON BUILDERS & HELICOPTER MODELS
    ========================================================= */
 function getHeliInfo(d) {
-  var t = (d.t || d.type || d.icao_type || d.desc || '').toUpperCase().trim();
-  var cs = (d.callsign || '').toUpperCase().trim();
-  if (t === 'AS35' || t === 'H125' || t === 'EC50' || cs.indexOf('AS35')!==-1) return { model:'Airbus AS350/H125 (Esquilo)', use:'Monomotor Leve / Policial, Utilitário, Táxi Aéreo', size:'light' };
-  if (t === 'R44' || cs.indexOf('R44')!==-1)  return { model:'Robinson R44', use:'Monomotor Leve (Pistão) / Particular, Treinamento, Agro', size:'light' };
-  if (t === 'R66' || cs.indexOf('R66')!==-1)  return { model:'Robinson R66', use:'Monomotor Leve (Turbina) / Executivo, Agropecuária', size:'light' };
-  if (t === 'B407' || cs.indexOf('B407')!==-1) return { model:'Bell 407', use:'Monomotor Leve / Corporativo, Utilitário', size:'light' };
-  if (t === 'B505' || cs.indexOf('B505')!==-1) return { model:'Bell 505', use:'Monomotor Leve / Particular (Entrada)', size:'light' };
-  if (t === 'A109' || cs.indexOf('A109')!==-1) return { model:'Leonardo AW109', use:'Bimotor Leve / Executivo VIP', size:'light' };
-  if (t === 'EC30' || t === 'H130' || cs.indexOf('H130')!==-1) return { model:'Airbus H130', use:'Monomotor Leve / Executivo VIP, Turismo', size:'light' };
-  if (t === 'EC35' || t === 'H135' || cs.indexOf('H135')!==-1) return { model:'Airbus H135', use:'Bimotor Leve / Aeromédico, Policial', size:'light' };
-  if (t === 'EC45' || t === 'H145' || cs.indexOf('H145')!==-1) return { model:'Airbus H145', use:'Bimotor Médio / Aeromédico, Policial, Executivo VIP', size:'medium' };
-  if (t === 'A169' || cs.indexOf('A169')!==-1) return { model:'Leonardo AW169', use:'Bimotor Médio / Aeromédico, Offshore, Executivo', size:'medium' };
-  if (t === 'S76' || cs.indexOf('S76')!==-1)   return { model:'Sikorsky S-76', use:'Bimotor Médio / Offshore (Petróleo e Gás), Executivo', size:'medium' };
-  if (t === 'AW39' || t === 'A139' || cs.indexOf('A139')!==-1) return { model:'Leonardo AW139', use:'Bimotor Médio / Offshore, Táxi Aéreo pesado', size:'medium' };
-  if (t === 'S92' || cs.indexOf('S92')!==-1)   return { model:'Sikorsky S-92', use:'Bimotor Pesado / Offshore (Missões longas pré-sal)', size:'heavy' };
-  if (t === 'EC25' || t === 'H225' || t === 'AS33' || cs.indexOf('H225')!==-1) return { model:'Airbus H225 (Super Puma)', use:'Bimotor Pesado / Offshore (Missões longas pré-sal)', size:'heavy' };
+  var match = getHeliMatch(d);
+  if (match) return match;
   return { model:'Helicóptero (Geral)', use:'Monomotor / Bimotor Utilitário', size:'light' };
 }
 
