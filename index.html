@@ -334,112 +334,72 @@ try {
   });
 
   // =========================================================
-  // AEROVIAS BRASILEIRAS - CAMADA VETORIAL GEOJSON
+  // AEROVIAS BRASILEIRAS - CARREGADOR GEOJSON EXTERNO
+  // 112 aerovias: 59 Lower (W), 37 Upper (UW), 16 REHA
   // Somente linhas e nomes. SEM ALTITUDES. Uso recreativo.
-  // Dados extraídos das cartas ENRC L/H e REHA do DECEA.
   // =========================================================
+  var lowerLayer = L.layerGroup().addTo(map);
+  var upperLayer = L.layerGroup().addTo(map);
+  var rehaLayer  = L.layerGroup().addTo(map);
 
-  // --- AEROVIAS INFERIORES (L - Lower Airways) ---
-  var airwaysLower = {
-    "type": "FeatureCollection",
-    "features": [
-      {"type":"Feature","properties":{"name":"UW2","type":"L"},"geometry":{"type":"LineString","coordinates":[[-46.65,-23.55],[-47.43,-21.99],[-48.55,-20.50],[-49.37,-18.92],[-49.92,-16.68],[-49.28,-15.79]]}},
-      {"type":"Feature","properties":{"name":"UW4","type":"L"},"geometry":{"type":"LineString","coordinates":[[-43.17,-22.91],[-44.26,-21.14],[-46.65,-23.55],[-49.17,-25.52],[-51.18,-27.60]]}},
-      {"type":"Feature","properties":{"name":"UW6","type":"L"},"geometry":{"type":"LineString","coordinates":[[-38.52,-12.97],[-39.05,-14.86],[-40.49,-17.73],[-41.17,-19.90],[-43.17,-22.91]]}},
-      {"type":"Feature","properties":{"name":"UW8","type":"L"},"geometry":{"type":"LineString","coordinates":[[-34.87,-8.05],[-35.74,-9.67],[-37.07,-10.91],[-38.52,-12.97]]}},
-      {"type":"Feature","properties":{"name":"UW10","type":"L"},"geometry":{"type":"LineString","coordinates":[[-47.93,-15.87],[-46.65,-23.55],[-48.48,-25.42],[-49.17,-25.52],[-49.23,-28.68],[-51.18,-29.93]]}},
-      {"type":"Feature","properties":{"name":"UW12","type":"L"},"geometry":{"type":"LineString","coordinates":[[-43.17,-22.91],[-42.00,-22.00],[-40.28,-20.32],[-39.26,-17.74],[-38.52,-12.97]]}},
-      {"type":"Feature","properties":{"name":"UW14","type":"L"},"geometry":{"type":"LineString","coordinates":[[-51.18,-27.60],[-49.17,-25.52],[-46.65,-23.55],[-43.17,-22.91],[-40.28,-20.32]]}},
-      {"type":"Feature","properties":{"name":"UW16","type":"L"},"geometry":{"type":"LineString","coordinates":[[-46.65,-23.55],[-45.43,-23.30],[-43.17,-22.91],[-42.55,-22.13]]}},
-      {"type":"Feature","properties":{"name":"UW18","type":"L"},"geometry":{"type":"LineString","coordinates":[[-49.28,-15.79],[-48.55,-14.10],[-47.93,-15.87],[-47.43,-21.99],[-46.65,-23.55]]}},
-      {"type":"Feature","properties":{"name":"UW20","type":"L"},"geometry":{"type":"LineString","coordinates":[[-46.65,-23.55],[-47.91,-22.33],[-49.05,-20.45],[-50.43,-18.92],[-51.72,-16.72]]}},
-      {"type":"Feature","properties":{"name":"UW22","type":"L"},"geometry":{"type":"LineString","coordinates":[[-49.28,-15.79],[-51.72,-16.72],[-54.59,-20.44],[-55.78,-22.33]]}},
-      {"type":"Feature","properties":{"name":"UW24","type":"L"},"geometry":{"type":"LineString","coordinates":[[-55.78,-22.33],[-54.59,-20.44],[-51.72,-16.72],[-49.28,-15.79],[-47.93,-15.87]]}},
-      {"type":"Feature","properties":{"name":"UW26","type":"L"},"geometry":{"type":"LineString","coordinates":[[-49.17,-25.52],[-48.48,-25.42],[-47.08,-26.30],[-46.65,-23.55]]}},
-      {"type":"Feature","properties":{"name":"UW28","type":"L"},"geometry":{"type":"LineString","coordinates":[[-60.01,-3.12],[-56.10,-3.78],[-52.45,-3.47],[-49.13,-2.50],[-47.92,-1.41],[-44.28,-2.53]]}},
-      {"type":"Feature","properties":{"name":"UW30","type":"L"},"geometry":{"type":"LineString","coordinates":[[-44.28,-2.53],[-43.04,-3.71],[-40.48,-3.78],[-38.52,-3.72],[-35.21,-5.78],[-34.87,-8.05]]}},
-      {"type":"Feature","properties":{"name":"UW32","type":"L"},"geometry":{"type":"LineString","coordinates":[[-60.01,-3.12],[-60.72,-2.14],[-60.05,-0.05],[-58.90,2.15],[-56.10,3.50]]}},
-      {"type":"Feature","properties":{"name":"UW34","type":"L"},"geometry":{"type":"LineString","coordinates":[[-49.28,-15.79],[-47.93,-15.87],[-46.62,-15.95],[-44.39,-14.88],[-42.78,-15.45],[-40.49,-17.73]]}},
-      {"type":"Feature","properties":{"name":"UW36","type":"L"},"geometry":{"type":"LineString","coordinates":[[-55.78,-22.33],[-53.47,-23.42],[-51.18,-24.30],[-49.17,-25.52],[-48.48,-25.42]]}},
-      {"type":"Feature","properties":{"name":"UW38","type":"L"},"geometry":{"type":"LineString","coordinates":[[-43.17,-22.91],[-43.97,-23.00],[-45.43,-23.30],[-46.65,-23.55],[-48.48,-25.42]]}},
-      {"type":"Feature","properties":{"name":"UW40","type":"L"},"geometry":{"type":"LineString","coordinates":[[-67.81,-9.87],[-65.36,-10.17],[-62.90,-10.90],[-60.72,-12.05],[-56.10,-15.40],[-51.72,-16.72]]}}
-    ]
-  };
+  // Carregar airways_brazil.json via XMLHttpRequest (compatível com Smart TVs)
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', 'airways_brazil.json', true);
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        var features = data.features || [];
+        console.log('[Radar] Aerovias carregadas: ' + features.length);
 
-  // --- AEROVIAS SUPERIORES (H - Upper Airways) ---
-  var airwaysUpper = {
-    "type": "FeatureCollection",
-    "features": [
-      {"type":"Feature","properties":{"name":"UZ2","type":"H"},"geometry":{"type":"LineString","coordinates":[[-46.65,-23.55],[-47.43,-21.99],[-49.37,-18.92],[-49.28,-15.79],[-47.93,-15.87]]}},
-      {"type":"Feature","properties":{"name":"UZ4","type":"H"},"geometry":{"type":"LineString","coordinates":[[-43.17,-22.91],[-46.65,-23.55],[-49.17,-25.52],[-51.18,-27.60],[-51.18,-29.93]]}},
-      {"type":"Feature","properties":{"name":"UZ6","type":"H"},"geometry":{"type":"LineString","coordinates":[[-34.87,-8.05],[-38.52,-12.97],[-40.49,-17.73],[-43.17,-22.91]]}},
-      {"type":"Feature","properties":{"name":"UZ8","type":"H"},"geometry":{"type":"LineString","coordinates":[[-49.28,-15.79],[-51.72,-16.72],[-55.78,-22.33],[-57.53,-25.26]]}},
-      {"type":"Feature","properties":{"name":"UZ10","type":"H"},"geometry":{"type":"LineString","coordinates":[[-47.93,-15.87],[-46.65,-23.55],[-48.48,-25.42],[-49.23,-28.68]]}},
-      {"type":"Feature","properties":{"name":"UZ12","type":"H"},"geometry":{"type":"LineString","coordinates":[[-60.01,-3.12],[-56.10,-3.78],[-49.13,-2.50],[-44.28,-2.53],[-38.52,-3.72],[-34.87,-8.05]]}},
-      {"type":"Feature","properties":{"name":"UZ14","type":"H"},"geometry":{"type":"LineString","coordinates":[[-43.17,-22.91],[-43.97,-23.00],[-46.65,-23.55],[-49.17,-25.52]]}},
-      {"type":"Feature","properties":{"name":"UZ16","type":"H"},"geometry":{"type":"LineString","coordinates":[[-67.81,-9.87],[-62.90,-10.90],[-56.10,-15.40],[-49.28,-15.79]]}},
-      {"type":"Feature","properties":{"name":"UZ18","type":"H"},"geometry":{"type":"LineString","coordinates":[[-46.65,-23.55],[-45.43,-23.30],[-43.17,-22.91],[-40.28,-20.32],[-38.52,-12.97]]}},
-      {"type":"Feature","properties":{"name":"UZ20","type":"H"},"geometry":{"type":"LineString","coordinates":[[-49.28,-15.79],[-47.93,-15.87],[-44.39,-14.88],[-40.49,-17.73],[-38.52,-12.97]]}}
-    ]
-  };
+        // Separar por tipo
+        var lower = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'L'; }) };
+        var upper = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'H'; }) };
+        var reha  = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'REHA'; }) };
 
-  // --- REHA (Rotas Especiais de Helicópteros - SP e RJ) ---
-  var airwaysReha = {
-    "type": "FeatureCollection",
-    "features": [
-      {"type":"Feature","properties":{"name":"REHA SP-01","type":"REHA"},"geometry":{"type":"LineString","coordinates":[[-46.66,-23.55],[-46.63,-23.52],[-46.59,-23.50],[-46.55,-23.48]]}},
-      {"type":"Feature","properties":{"name":"REHA SP-02","type":"REHA"},"geometry":{"type":"LineString","coordinates":[[-46.66,-23.55],[-46.70,-23.52],[-46.73,-23.49],[-46.76,-23.46]]}},
-      {"type":"Feature","properties":{"name":"REHA SP-03","type":"REHA"},"geometry":{"type":"LineString","coordinates":[[-46.66,-23.55],[-46.64,-23.58],[-46.61,-23.61],[-46.58,-23.64]]}},
-      {"type":"Feature","properties":{"name":"REHA SP-04","type":"REHA"},"geometry":{"type":"LineString","coordinates":[[-46.66,-23.55],[-46.69,-23.58],[-46.72,-23.62],[-46.75,-23.65]]}},
-      {"type":"Feature","properties":{"name":"REHA SP-05","type":"REHA"},"geometry":{"type":"LineString","coordinates":[[-46.66,-23.55],[-46.62,-23.54],[-46.57,-23.52],[-46.53,-23.50]]}},
-      {"type":"Feature","properties":{"name":"REHA RJ-01","type":"REHA"},"geometry":{"type":"LineString","coordinates":[[-43.17,-22.91],[-43.20,-22.88],[-43.24,-22.85],[-43.28,-22.82]]}},
-      {"type":"Feature","properties":{"name":"REHA RJ-02","type":"REHA"},"geometry":{"type":"LineString","coordinates":[[-43.17,-22.91],[-43.14,-22.88],[-43.10,-22.85],[-43.06,-22.82]]}},
-      {"type":"Feature","properties":{"name":"REHA RJ-03","type":"REHA"},"geometry":{"type":"LineString","coordinates":[[-43.17,-22.91],[-43.19,-22.94],[-43.22,-22.98],[-43.25,-23.01]]}},
-      {"type":"Feature","properties":{"name":"REHA RJ-04","type":"REHA"},"geometry":{"type":"LineString","coordinates":[[-43.17,-22.91],[-43.15,-22.94],[-43.12,-22.97],[-43.09,-23.00]]}},
-      {"type":"Feature","properties":{"name":"REHA RJ-05","type":"REHA"},"geometry":{"type":"LineString","coordinates":[[-43.17,-22.91],[-43.22,-22.90],[-43.28,-22.88],[-43.33,-22.86]]}}
-    ]
-  };
+        // Aerovias Inferiores (W) - Linhas tracejadas cyan 30%
+        L.geoJSON(lower, {
+          style: function() { return { color: '#00d4ff', weight: 1.2, opacity: 0.3, dashArray: '8 5' }; },
+          onEachFeature: function(feature, layer) {
+            layer.bindTooltip(feature.properties.name, {
+              permanent: false, direction: 'center', className: 'airway-label'
+            });
+          }
+        }).addTo(lowerLayer);
 
-  // --- RENDERIZAÇÃO DAS AEROVIAS COMO CAMADAS VETORIAIS ---
+        // Aerovias Superiores (UW) - Linhas sólidas azuis 30%
+        L.geoJSON(upper, {
+          style: function() { return { color: '#4488ff', weight: 1.5, opacity: 0.3 }; },
+          onEachFeature: function(feature, layer) {
+            layer.bindTooltip(feature.properties.name, {
+              permanent: false, direction: 'center', className: 'airway-label'
+            });
+          }
+        }).addTo(upperLayer);
 
-  // Aerovias Inferiores (L) - Linhas tracejadas cyan com opacidade 30%
-  var lowerLayer = L.geoJSON(airwaysLower, {
-    style: function() { return { color: '#00d4ff', weight: 1.2, opacity: 0.3, dashArray: '8 5' }; },
-    onEachFeature: function(feature, layer) {
-      layer.bindTooltip(feature.properties.name, {
-        permanent: true, direction: 'center', className: 'airway-label',
-        offset: [0, 0]
-      });
+        // REHA (Helicópteros SP/RJ) - Linhas tracejadas âmbar 40%
+        L.geoJSON(reha, {
+          style: function() { return { color: '#ffb340', weight: 1.8, opacity: 0.4, dashArray: '4 4' }; },
+          onEachFeature: function(feature, layer) {
+            layer.bindTooltip(feature.properties.name, {
+              permanent: false, direction: 'center', className: 'airway-label-reha'
+            });
+          }
+        }).addTo(rehaLayer);
+
+        console.log('[Radar] Renderizadas: ' + lower.features.length + ' Lower, ' + upper.features.length + ' Upper, ' + reha.features.length + ' REHA');
+      } catch (e) {
+        console.error('[Radar] Erro ao processar airways_brazil.json:', e);
+      }
     }
-  }).addTo(map);
-
-  // Aerovias Superiores (H) - Linhas sólidas azuis com opacidade 30%
-  var upperLayer = L.geoJSON(airwaysUpper, {
-    style: function() { return { color: '#4488ff', weight: 1.5, opacity: 0.3 }; },
-    onEachFeature: function(feature, layer) {
-      layer.bindTooltip(feature.properties.name, {
-        permanent: true, direction: 'center', className: 'airway-label',
-        offset: [0, 0]
-      });
-    }
-  }).addTo(map);
-
-  // REHA (Helicópteros SP/RJ) - Linhas tracejadas âmbar com opacidade 40%
-  var rehaLayer = L.geoJSON(airwaysReha, {
-    style: function() { return { color: '#ffb340', weight: 1.8, opacity: 0.4, dashArray: '4 4' }; },
-    onEachFeature: function(feature, layer) {
-      layer.bindTooltip(feature.properties.name, {
-        permanent: true, direction: 'center', className: 'airway-label-reha',
-        offset: [0, 0]
-      });
-    }
-  }).addTo(map);
+  };
+  xhr.send();
 
   // --- CONTROLE DE CAMADAS PARA LIGAR/DESLIGAR AEROVIAS ---
   var overlayMaps = {
-    "✈️ Aerovias Inferiores (L)": lowerLayer,
-    "🛫 Aerovias Superiores (H)": upperLayer,
-    "🚁 REHA Helicópteros (SP/RJ)": rehaLayer
+    "\u2708\ufe0f Aerovias Inferiores (W) - 59 rotas": lowerLayer,
+    "\ud83d\udeeb Aerovias Superiores (UW) - 37 rotas": upperLayer,
+    "\ud83d\ude81 REHA Helic\u00f3pteros (SP/RJ) - 16 rotas": rehaLayer
   };
   L.control.layers(null, overlayMaps, { position: 'bottomleft', collapsed: true }).addTo(map);
 
