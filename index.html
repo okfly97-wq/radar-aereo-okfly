@@ -308,39 +308,25 @@ try {
     throw new Error('Biblioteca Leaflet (L) não foi carregada pelo navegador da TV (Erro de CDN/SSL).');
   }
   map = L.map('map', { center:CENTER, zoom:ZOOM, zoomControl:true, attributionControl:true });
-  // 1. CAMADA PRIMÁRIA UNIVERSAL (Stadia Alidade Smooth Dark): Basemap noturno nativo (já nasce 100% escuro no servidor, sem nenhum filtro CSS instável em WebKit mobile). Baseado no OpenStreetMap, escreve o nome dos países e cidades estritamente em português nativo (Brasil com S)!
-  var stadiaLayer = L.tileLayer('//tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; Stadia Maps &copy; OpenStreetMap (Brasil com S)',
+  // 1. CAMADA PRIMÁRIA UNIVERSAL (CartoDB Dark Matter com URL Relativa //): Basemap noturno nativo de altíssima fidelidade e performance (já nasce 100% escuro no servidor, sem filtro CSS instável no celular). Livre de chaves de API ou bloqueios 401, roda liso no PC e Celular sem Mixed Content!
+  var cartoLayer = L.tileLayer('//basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+    attribution: '&copy; CARTO &copy; OpenStreetMap (Fundo Escuro Nativo)',
     maxZoom: 19, crossOrigin: false
   }).addTo(map);
 
-  // 2. CAMADA SECUNDÁRIA (Fallback CartoDB Dark Matter com URL relativa para PC e Celular)
-  var cartoLayer = L.tileLayer('//basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
-    attribution: '&copy; CARTO &copy; OSM (Fundo Escuro Nativo)',
-    maxZoom: 19, crossOrigin: false
-  });
-
-  // 3. CAMADA TERCIÁRIA (Fallback CartoDB com HTTP puro exclusivo para Smart TVs antigas)
+  // 2. CAMADA SECUNDÁRIA (Fallback CartoDB com HTTP puro exclusivo para Smart TVs antigas que recusam Handshake SSL)
   var cartoHttpLayer = L.tileLayer('http://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
-    attribution: '&copy; CARTO &copy; OSM HTTP (Smart TV Mode)',
+    attribution: '&copy; CARTO &copy; OpenStreetMap HTTP (Smart TV Mode)',
     maxZoom: 19, crossOrigin: false
   });
 
-  // 4. CAMADA QUATERNÁRIA (Fallback Esri ArcGIS Dark Gray Base, CDN governamental de força bruta)
+  // 3. CAMADA TERCIÁRIA (Fallback Esri ArcGIS Dark Gray Base, CDN governamental de força bruta, sem chaves de API)
   var esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
     attribution: '&copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
     maxZoom: 16, crossOrigin: false
   });
 
   // Roteador de Fallback Automático via evento tileerror do Leaflet!!!
-  stadiaLayer.on('tileerror', function(err) {
-    console.warn('[Radar] Stadia Primario falhou. Alternando instantaneamente para CartoDB Dark Matter...', err);
-    if (!map.hasLayer(cartoLayer)) {
-      map.removeLayer(stadiaLayer);
-      cartoLayer.addTo(map);
-    }
-  });
-
   cartoLayer.on('tileerror', function(err) {
     console.warn('[Radar] CartoDB Primario falhou. Alternando instantaneamente para CartoDB HTTP puro (Smart TV Mode)...', err);
     if (!map.hasLayer(cartoHttpLayer)) {
