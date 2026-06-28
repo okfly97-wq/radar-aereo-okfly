@@ -214,6 +214,18 @@ body.hide-reha-labels .airway-label-reha, body.hide-rea-labels .airway-label-rea
 .airport-label{color:#7a8a99!important;}
 .city-label::before, .airport-label::before{display:none!important;}
 
+/* BOTAO DE TOGGLE DO PAINEL (MOBILE) */
+#panel-toggle-btn {
+  display: none; position: fixed; top: 60px; right: 8px; z-index: 99997;
+  background: var(--panel); border: 1px solid var(--border); color: var(--cyan);
+  padding: 8px 14px; border-radius: 20px; font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 700; box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  cursor: pointer; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+#panel-toggle-btn:hover { background: var(--card); border-color: var(--cyan); }
+.panel-close-btn { display: none; cursor: pointer; color: var(--muted); font-size: 14px; padding: 0 4px; }
+.panel-close-btn:hover { color: var(--white); }
+
 /* =========================================================
    RESPONSIVIDADE MOBILE (CELULARES E TABLETS)
    ========================================================= */
@@ -228,6 +240,10 @@ body.hide-reha-labels .airway-label-reha, body.hide-rea-labels .airway-label-rea
   .pill .v { font-size:15px; }
   .pill .l { font-size:8px; }
   #sbadge { padding:3px 8px; font-size:9.5px; }
+  
+  #panel-toggle-btn { display: flex; align-items: center; gap: 6px; }
+  .panel-close-btn { display: block; }
+  #panel.collapsed { display: none !important; }
   
   #panel {
     top:60px; bottom:auto; left:auto; right:8px; width:128px;
@@ -281,10 +297,13 @@ body.hide-reha-labels .airway-label-reha, body.hide-rea-labels .airway-label-rea
   </div>
 </header>
 
-<aside id="panel">
+<button id="panel-toggle-btn" onclick="togglePanel()"><span style="font-size:13px">📋</span> Lista (<span id="btn-vis-cnt">0</span>)</button>
+
+<aside id="panel" class="collapsed">
   <div class="ph">
     <div class="ph-l"><span class="ph-title">Aeronaves na Tela</span></div>
     <span class="ph-cnt" id="ph-cnt">0</span>
+    <div class="panel-close-btn" onclick="togglePanel()" title="Fechar painel">✖</div>
   </div>
   <div id="cpbar-w"><div id="cpbar"></div></div>
   <div id="aclist"><div class="empty-s"><div class="em">&#9992;</div>Aguardando dados&#8230;</div></div>
@@ -308,7 +327,7 @@ body.hide-reha-labels .airway-label-reha, body.hide-rea-labels .airway-label-rea
   <div class="botbar-center" style="position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;pointer-events:none;">
     <img src="footer_logo_okfly.png" alt="OK FLY" style="height:36px;width:auto;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,179,64,0.55));"/>
   </div>
-  <div id="nextupd">Próxima atualização em <b id="cd">10</b>s</div>
+  <div id="nextupd" title="Próxima atualização"><span style="color:var(--muted)">🔄 </span><b id="cd">10</b>s</div>
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
@@ -973,6 +992,8 @@ function renderList() {
   var cnt = vis.length;
   document.getElementById('ph-cnt').textContent = cnt;
   document.getElementById('v-vis').textContent  = cnt;
+  var btnCnt = document.getElementById('btn-vis-cnt');
+  if (btnCnt) btnCnt.textContent = cnt;
 
   var list = document.getElementById('aclist');
   if (!cnt) {
@@ -1003,8 +1024,21 @@ function renderList() {
   }
 }
 
-/* Exposed for onclick in list items */
+/* Exposed for onclick in list items and mobile toggle button */
 window._sel = function(icao24) { selectAircraft(icao24, false); };
+window.togglePanel = function() {
+  var p = document.getElementById('panel');
+  var b = document.getElementById('panel-toggle-btn');
+  if (p && b) {
+    if (p.classList.contains('collapsed')) {
+      p.classList.remove('collapsed');
+      b.style.display = 'none';
+    } else {
+      p.classList.add('collapsed');
+      b.style.display = 'flex';
+    }
+  }
+};
 
 /* =========================================================
    SMART TV POLYFILLS (SUPORTE A NAVEGADORES LEGADOS)
