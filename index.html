@@ -26,7 +26,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 
 /* MAP */
 #map{position:fixed;inset:0;z-index:0}
-.dark-invert{filter:invert(100%) hue-rotate(180deg) brightness(95%) contrast(105%);-webkit-filter:invert(100%) hue-rotate(180deg) brightness(95%) contrast(105%)}
 #vignette{position:fixed;inset:0;pointer-events:none;z-index:1;
   background:radial-gradient(ellipse at center,transparent 45%,rgba(0,2,10,0.65) 100%)}
 #scanring{position:fixed;inset:0;pointer-events:none;z-index:2}
@@ -309,21 +308,21 @@ try {
     throw new Error('Biblioteca Leaflet (L) não foi carregada pelo navegador da TV (Erro de CDN/SSL).');
   }
   map = L.map('map', { center:CENTER, zoom:ZOOM, zoomControl:true, attributionControl:true });
-  // 1. CAMADA PRIMÁRIA UNIVERSAL (OpenStreetMap Nativo com Inversão Escura): O OpenStreetMap oficial mundial possui o nome dos países gravados estritamente no IDIOMA NATIVO (Brasil com S). A classe CSS 'dark-invert' transforma o mapa claro em um fundo escuro espetacular e de alta fidelidade!
-  var osmDarkLayer = L.tileLayer('//tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap (Brasil com S)',
-    maxZoom: 19, className: 'dark-invert', crossOrigin: false
+  // 1. CAMADA PRIMÁRIA UNIVERSAL (Stadia Alidade Smooth Dark): Basemap noturno nativo (já nasce 100% escuro no servidor, sem nenhum filtro CSS instável em WebKit mobile). Baseado no OpenStreetMap, escreve o nome dos países e cidades estritamente em português nativo (Brasil com S)!
+  var stadiaLayer = L.tileLayer('//tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; Stadia Maps &copy; OpenStreetMap (Brasil com S)',
+    maxZoom: 19, crossOrigin: false
   }).addTo(map);
 
-  // 2. CAMADA SECUNDÁRIA (Fallback OpenStreetMap com HTTP puro para Smart TVs antigas)
-  var osmHttpLayer = L.tileLayer('http://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap HTTP (Brasil com S)',
-    maxZoom: 19, className: 'dark-invert', crossOrigin: false
+  // 2. CAMADA SECUNDÁRIA (Fallback CartoDB Dark Matter com URL relativa para PC e Celular)
+  var cartoLayer = L.tileLayer('//basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+    attribution: '&copy; CARTO &copy; OSM (Fundo Escuro Nativo)',
+    maxZoom: 19, crossOrigin: false
   });
 
-  // 3. CAMADA TERCIÁRIA (Fallback CartoDB Dark Matter com URL relativa)
-  var cartoLayer = L.tileLayer('//basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
-    attribution: '&copy; CARTO &copy; OSM',
+  // 3. CAMADA TERCIÁRIA (Fallback CartoDB com HTTP puro exclusivo para Smart TVs antigas)
+  var cartoHttpLayer = L.tileLayer('http://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+    attribution: '&copy; CARTO &copy; OSM HTTP (Smart TV Mode)',
     maxZoom: 19, crossOrigin: false
   });
 
@@ -334,26 +333,26 @@ try {
   });
 
   // Roteador de Fallback Automático via evento tileerror do Leaflet!!!
-  osmDarkLayer.on('tileerror', function(err) {
-    console.warn('[Radar] OpenStreetMap Primario falhou. Alternando instantaneamente para OpenStreetMap HTTP puro (Smart TV Mode)...', err);
-    if (!map.hasLayer(osmHttpLayer)) {
-      map.removeLayer(osmDarkLayer);
-      osmHttpLayer.addTo(map);
-    }
-  });
-
-  osmHttpLayer.on('tileerror', function(err) {
-    console.warn('[Radar] OpenStreetMap HTTP falhou. Alternando instantaneamente para CartoDB Dark Matter...', err);
+  stadiaLayer.on('tileerror', function(err) {
+    console.warn('[Radar] Stadia Primario falhou. Alternando instantaneamente para CartoDB Dark Matter...', err);
     if (!map.hasLayer(cartoLayer)) {
-      map.removeLayer(osmHttpLayer);
+      map.removeLayer(stadiaLayer);
       cartoLayer.addTo(map);
     }
   });
 
   cartoLayer.on('tileerror', function(err) {
-    console.warn('[Radar] CartoDB Basemap falhou. Alternando instantaneamente para Esri ArcGIS...', err);
-    if (!map.hasLayer(esriLayer)) {
+    console.warn('[Radar] CartoDB Primario falhou. Alternando instantaneamente para CartoDB HTTP puro (Smart TV Mode)...', err);
+    if (!map.hasLayer(cartoHttpLayer)) {
       map.removeLayer(cartoLayer);
+      cartoHttpLayer.addTo(map);
+    }
+  });
+
+  cartoHttpLayer.on('tileerror', function(err) {
+    console.warn('[Radar] CartoDB HTTP falhou. Alternando instantaneamente para Esri ArcGIS...', err);
+    if (!map.hasLayer(esriLayer)) {
+      map.removeLayer(cartoHttpLayer);
       esriLayer.addTo(map);
     }
   });
