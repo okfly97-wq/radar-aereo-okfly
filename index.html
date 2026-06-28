@@ -764,7 +764,7 @@ function buildPopup(d) {
   var hdg   = d.true_track != null ? Math.round(d.true_track) + '°' : 'N/A';
   var vr    = d.vertical_rate;
   var vrtStr = vr != null
-    ? ((vr > 0.5 ? '&#8593; ' : vr < -0.5 ? '&#8595; ' : '&#8594; ') + Math.abs(Math.round(vr)) + ' m/s')
+    ? ((vr > 50 ? '&#8593; ' : vr < -50 ? '&#8595; ' : '&#8594; ') + Math.abs(Math.round(vr)).toLocaleString() + ' ft/min')
     : '—';
   var gnd = d.on_ground ? 'Em solo' : 'Em voo';
 
@@ -1071,7 +1071,7 @@ window._tvJsonpCallback = function(json) {
       on_ground:      s.alt_baro == null || s.alt_baro <= 0,
       velocity:       s.gs != null ? (s.gs * 1.852 / 3.6) : null,
       true_track:     s.track,
-      vertical_rate:  s.baro_rate != null ? (s.baro_rate / 196.85) : null,
+      vertical_rate:  s.baro_rate != null ? s.baro_rate : null, // Mantém original em ft/min
       geo_altitude:   s.alt_geom != null ? (s.alt_geom / 3.281) : null
     };
   }).filter(function(d){ return d.latitude != null && d.longitude != null; });
@@ -1119,21 +1119,24 @@ window._tvJsonpCallback = function(json) {
 };
 
 function fetchAircraft() {
-  console.log('[Radar] Executando busca v3.8 (LG Smart TV Universal Mode & JSONP Tunnel)...');
+  console.log('[Radar] Executando busca v4.0 (Multi-Mirrors de Alta Velocidade & JSONP Tunnel)...');
   setStatus('loading', 'Atualizando...');
   var openskyUrl = 'https://opensky-network.org/api/states/all?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax;
   var adsbLolUrl = 'https://api.adsb.lol/v2/lat/-14/lon/-53/dist/2000'; // Raio de 2000 NM (cobre todo o Brasil)
+  var airplanesLiveUrl = 'https://api.airplanes.live/v2/lat/-14/lon/-53/dist/2000';
+  var adsbOneUrl = 'https://api.adsb.one/v2/lat/-14/lon/-53/dist/2000';
 
   var reqs = [
-    { type: 'adsblol',       url: 'https://radar-aereo-okfly.onrender.com/api/adsblol' }, // 1. Nosso proxy Render com Cache (1ms, infalível)
-    { type: 'jsonp_adsblol', url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(adsbLolUrl) }, // 2. Tenta via AllOrigins /get wrapper
-    { type: 'adsblol',       url: 'https://api.allorigins.win/raw?url=' + encodeURIComponent(adsbLolUrl) }, // 3. Tenta via AllOrigins raw
-    { type: 'adsblol',       url: 'https://corsproxy.io/?' + encodeURIComponent(adsbLolUrl) }, // 4. Tenta via corsproxy
-    { type: 'adsblol',       url: adsbLolUrl }, // 5. Tenta direto
-    { type: 'raw',           url: 'https://corsproxy.io/?' + encodeURIComponent(openskyUrl) },
-    { type: 'jsonp',         url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(openskyUrl) },
+    { type: 'adsblol',       url: airplanesLiveUrl }, // 1. Airplanes.live (Ultraveloz e estavel, sem bloqueio CORS)
+    { type: 'adsblol',       url: adsbOneUrl },       // 2. ADSB.one (Mirror estavel global)
+    { type: 'adsblol',       url: 'https://radar-aereo-okfly.onrender.com/api/adsblol' }, // 3. Nosso proxy Render com Cache
+    { type: 'adsblol',       url: adsbLolUrl }, // 4. ADSB.lol direto
+    { type: 'jsonp_adsblol', url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(airplanesLiveUrl) }, // 5. AllOrigins wrapper Airplanes
+    { type: 'jsonp_adsblol', url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(adsbLolUrl) },       // 6. AllOrigins wrapper ADSB.lol
+    { type: 'adsblol',       url: 'https://corsproxy.io/?' + encodeURIComponent(airplanesLiveUrl) }, // 7. Corsproxy Airplanes
     { type: 'raw',           url: openskyUrl },
-    { type: 'raw',           url: 'https://radar-aereo-okfly.onrender.com/api/opensky?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax }
+    { type: 'raw',           url: 'https://radar-aereo-okfly.onrender.com/api/opensky?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax },
+    { type: 'jsonp',         url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(openskyUrl) }
   ];
 
   // Dispara as requisicoes em paralelo usando Promise vanilla sem async/await para suporte em Smart TV LG WebOS
@@ -1145,8 +1148,8 @@ function fetchAircraft() {
         j = JSON.parse(j.contents);
       }
       if (item.type === 'adsblol' || item.type === 'jsonp_adsblol') {
-        if (!j || !j.ac) throw new Error('Invalid ADSB.lol structure');
-        console.log('[Radar] SUCESSO VITÓRIA com ADSB.lol via:', item.url);
+        if (!j || !j.ac) throw new Error('Invalid ADSB structure');
+        console.log('[Radar] SUCESSO VITÓRIA com ADSB via:', item.url);
         return { type: 'adsblol', list: j.ac };
       } else {
         if (!j || j.error || !j.states) throw new Error('Invalid OpenSky structure');
@@ -1175,7 +1178,7 @@ function fetchAircraft() {
           on_ground:      s.alt_baro == null || s.alt_baro <= 0,
           velocity:       s.gs != null ? (s.gs * 1.852 / 3.6) : null,
           true_track:     s.track,
-          vertical_rate:  s.baro_rate != null ? (s.baro_rate / 196.85) : null,
+          vertical_rate:  s.baro_rate != null ? s.baro_rate : null, // Mantém original em ft/min
           geo_altitude:   s.alt_geom != null ? (s.alt_geom / 3.281) : null
         };
       }).filter(function(d){ return d.latitude != null && d.longitude != null; });
@@ -1191,7 +1194,7 @@ function fetchAircraft() {
           on_ground:      s[8],
           velocity:       s[9],
           true_track:     s[10],
-          vertical_rate:  s[11],
+          vertical_rate:  s[11] != null ? Math.round(s[11] * 196.85) : null, // Converte m/s para ft/min
           geo_altitude:   s[13]
         };
       }).filter(function(d){ return d.latitude != null && d.longitude != null; });
@@ -1284,13 +1287,13 @@ function fetchAircraft() {
     setStatus('error', 'Sem dados — retentando...');
     resetCountdown();
     
-    // FALLBACK BRUTAL DE SCRIPT TAG JSONP PARA SMART TVS (Ignora CORS e regras restritas de HTTPS/SSL)
+    // FALLBACK BRUTAL DE SCRIPT TAG JSONP PARA SMART TVS (HTTPS seguro)
     var scriptId = 'tv-jsonp-tunnel';
     var oldScript = document.getElementById(scriptId);
     if (oldScript) oldScript.remove();
     var s = document.createElement('script');
     s.id = scriptId;
-    s.src = 'http://api.allorigins.win/get?url=' + encodeURIComponent(adsbLolUrl) + '&callback=_tvJsonpCallback';
+    s.src = 'https://api.allorigins.win/get?url=' + encodeURIComponent(airplanesLiveUrl) + '&callback=_tvJsonpCallback';
     document.body.appendChild(s);
 
     var listEl = document.getElementById('alist');
