@@ -372,7 +372,7 @@ try {
 
   // Carregar airways_brazil.json via XMLHttpRequest com Cache Buster Atualizado
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', 'airways_brazil.json?v=202606281630', true);
+  xhr.open('GET', 'airways_brazil.json?v=202606281636', true);
   xhr.onreadystatechange = function() {
     if (xhr.readyState === 4 && xhr.status === 200) {
       try {
@@ -381,10 +381,11 @@ try {
         console.log('[Radar] Aerovias carregadas: ' + features.length);
 
         // Separar por tipo
-        var lower = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'L'; }) };
-        var upper = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'H'; }) };
-        var reha  = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'REHA'; }) };
-        var rea   = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'REA'; }) };
+        var lower   = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'L'; }) };
+        var upper   = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'H'; }) };
+        var express = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'EXPRESS_H'; }) };
+        var reha    = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'REHA'; }) };
+        var rea     = { type: 'FeatureCollection', features: features.filter(function(f) { return f.properties.type === 'REA'; }) };
 
         // Aerovias Inferiores (W) - Linhas tracejadas cyan 30%
         L.geoJSON(lower, {
@@ -396,9 +397,19 @@ try {
           }
         }).addTo(lowerLayer);
 
-        // Aerovias Superiores (UW) - Linhas sólidas azuis 30%
+        // Aerovias Superiores Padrão (UW) - Linhas sólidas azuis 30% (Discretas)
         L.geoJSON(upper, {
           style: function() { return { color: '#4488ff', weight: 1.5, opacity: 0.3 }; },
+          onEachFeature: function(feature, layer) {
+            layer.bindTooltip(feature.properties.name, {
+              permanent: true, direction: 'center', className: 'airway-label'
+            });
+          }
+        }).addTo(upperLayer);
+
+        // Aerovias Expressas Continentais (UM661 / UN857) - Linhas sólidas azuis elétricas 65% (Destaque Exclusivo)
+        L.geoJSON(express, {
+          style: function() { return { color: '#0077ff', weight: 2.0, opacity: 0.65 }; },
           onEachFeature: function(feature, layer) {
             layer.bindTooltip(feature.properties.name, {
               permanent: true, direction: 'center', className: 'airway-label'
