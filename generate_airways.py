@@ -289,19 +289,19 @@ AIRWAYS = {
     "UT12": {"type": "H", "fixes": ["SBCY", "ESBAM", "SBBR"]},
 
     # === AEROVIAS SUPERIORES (H - Upper / Famílias UM e UN) ===
-    "UM661_1": {"type": "EXPRESS_H", "fixes": ["POA", "CWB"]},
-    "UM661_2": {"type": "EXPRESS_H", "fixes": ["CWB", "SBKP"]},
-    "UM661_3": {"type": "EXPRESS_H", "fixes": ["SBKP", "CGN"]},
-    "UM661_4": {"type": "EXPRESS_H", "fixes": ["CGN", "VIT"]},
-    "UM661_5": {"type": "EXPRESS_H", "fixes": ["VIT", "SSA"]},
-    "UM661_6": {"type": "EXPRESS_H", "fixes": ["SSA", "REC"]},
-    "UM661_7": {"type": "EXPRESS_H", "fixes": ["REC", "NAT"]},
-    "UN857_1": {"type": "EXPRESS_H", "fixes": ["IGU", "CGR"]},
-    "UN857_2": {"type": "EXPRESS_H", "fixes": ["CGR", "GYN"]},
-    "UN857_3": {"type": "EXPRESS_H", "fixes": ["GYN", "BSB"]},
-    "UN857_4": {"type": "EXPRESS_H", "fixes": ["BSB", "THE"]},
-    "UN857_5": {"type": "EXPRESS_H", "fixes": ["THE", "SLZ"]},
-    "UN857_6": {"type": "EXPRESS_H", "fixes": ["SLZ", "BEL"]},
+    "UM661_1": {"type": "H", "fixes": ["POA", "CWB"]},
+    "UM661_2": {"type": "H", "fixes": ["CWB", "SBKP"]},
+    "UM661_3": {"type": "H", "fixes": ["SBKP", "CGN"]},
+    "UM661_4": {"type": "H", "fixes": ["CGN", "VIT"]},
+    "UM661_5": {"type": "H", "fixes": ["VIT", "SSA"]},
+    "UM661_6": {"type": "H", "fixes": ["SSA", "REC"]},
+    "UM661_7": {"type": "H", "fixes": ["REC", "NAT"]},
+    "UN857_1": {"type": "H", "fixes": ["IGU", "CGR"]},
+    "UN857_2": {"type": "H", "fixes": ["CGR", "GYN"]},
+    "UN857_3": {"type": "H", "fixes": ["GYN", "BSB"]},
+    "UN857_4": {"type": "H", "fixes": ["BSB", "THE"]},
+    "UN857_5": {"type": "H", "fixes": ["THE", "SLZ"]},
+    "UN857_6": {"type": "H", "fixes": ["SLZ", "BEL"]},
 }
 
 # =========================================================
@@ -397,7 +397,7 @@ def main():
     geojson = build_geojson()
     
     lower = sum(1 for f in geojson["features"] if f["properties"]["type"] == "L")
-    upper = sum(1 for f in geojson["features"] if f["properties"]["type"] in ("H", "EXPRESS_H"))
+    upper = sum(1 for f in geojson["features"] if f["properties"]["type"] == "H")
     reha  = sum(1 for f in geojson["features"] if f["properties"]["type"] == "REHA")
     rea   = sum(1 for f in geojson["features"] if f["properties"]["type"] == "REA")
     total = len(geojson["features"])
