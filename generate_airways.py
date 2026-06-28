@@ -287,6 +287,10 @@ AIRWAYS = {
     "UT10": {"type": "H", "fixes": ["CGB", "REBDO", "STM", "MAO"]},
     "UT11": {"type": "H", "fixes": ["MAO", "MAVOD", "SBPV", "SBCY"]},
     "UT12": {"type": "H", "fixes": ["SBCY", "ESBAM", "SBBR"]},
+
+    # === AEROVIAS SUPERIORES (H - Upper / Famílias UM e UN) ===
+    "UM661": {"type": "H", "fixes": ["POA", "CWB", "SBKP", "CGN", "VIT", "SSA", "REC", "NAT"]},
+    "UN857": {"type": "H", "fixes": ["IGU", "CGR", "GYN", "BSB", "THE", "SLZ", "BEL"]},
 }
 
 # =========================================================
