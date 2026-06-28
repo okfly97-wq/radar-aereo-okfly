@@ -167,8 +167,7 @@ body.hide-reha-labels .airway-label-reha, body.hide-rea-labels .airway-label-rea
 .binfo{display:flex;align-items:center;gap:16px;
   font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted)}
 .binfo b{color:var(--white)}
-#nextupd{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted)}
-#nextupd b{color:var(--amber)}
+#nextupd{display:none!important;}
 
 /* LEAFLET OVERRIDES */
 .leaflet-tooltip{
@@ -327,7 +326,7 @@ body.hide-reha-labels .airway-label-reha, body.hide-rea-labels .airway-label-rea
   <div class="botbar-center" style="position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;pointer-events:none;">
     <img src="footer_logo_okfly.png" alt="OK FLY" style="height:36px;width:auto;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,179,64,0.55));"/>
   </div>
-  <div id="nextupd" title="Próxima atualização"><span style="color:var(--muted)">🔄 </span><b id="cd">10</b>s</div>
+  <div id="nextupd" style="display:none!important;"><b id="cd">10</b></div>
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
