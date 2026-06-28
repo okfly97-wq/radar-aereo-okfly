@@ -326,6 +326,58 @@ try {
     maxZoom: 16, crossOrigin: false
   });
 
+  // 4. CAMADA QUATERNÁRIA (OpenStreetMap Clássico para Estradas e Rios)
+  var osmLayer = L.tileLayer('http://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap',
+    maxZoom: 19, opacity: 0.35, crossOrigin: false
+  });
+
+  // =========================================================
+  // OVERLAYS AERONÁUTICOS OFICIAIS (DECEA AISWEB & OPENAIP)
+  // =========================================================
+  // 1. Aerovias Inferiores (L - ERC Low / ENRC)
+  var deceaLowLayer = L.tileLayer.wms('https://geo.aisweb.decea.mil.br/geoserver/wms', {
+    layers: 'aisweb:erc_l', format: 'image/png', transparent: true, attribution: '&copy; DECEA AISWEB (Aerovias L)', crossOrigin: false
+  });
+
+  // 2. Aerovias Superiores (H - ERC High)
+  var deceaHighLayer = L.tileLayer.wms('https://geo.aisweb.decea.mil.br/geoserver/wms', {
+    layers: 'aisweb:erc_h', format: 'image/png', transparent: true, attribution: '&copy; DECEA AISWEB (Aerovias H)', crossOrigin: false
+  });
+
+  // 3. Cartas Visuais (WAC / VFR)
+  var deceaWacLayer = L.tileLayer.wms('https://geo.aisweb.decea.mil.br/geoserver/wms', {
+    layers: 'aisweb:wac', format: 'image/png', transparent: true, attribution: '&copy; DECEA AISWEB (Cartas Visuais WAC)', crossOrigin: false
+  });
+
+  // 4. Cartas REHA (Rotas Especiais de Helicópteros - SP / RJ / BR)
+  var deceaRehaLayer = L.tileLayer.wms('https://geo.aisweb.decea.mil.br/geoserver/wms', {
+    layers: 'aisweb:reha', format: 'image/png', transparent: true, attribution: '&copy; DECEA AISWEB (REHA Helicópteros)', crossOrigin: false
+  });
+
+  // 5. OpenAIP Global Aeronautical Overlay (Fallback Espetacular Global Aberto com Aerovias, Espaços Aéreos e Helipontos)
+  var openaipLayer = L.tileLayer('//{s}.tile.maps.openaip.org/geowebcache/service/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=openaip_basemap_overlay&STYLES=&SRS=EPSG:900913&FORMAT=image/png&TRANSPARENT=true', {
+    subdomains: 'abc', attribution: '&copy; OpenAIP (Espaços Aéreos & Aerovias)', transparent: true, opacity: 0.85, crossOrigin: false
+  });
+
+  // Setup do L.control.layers
+  var baseMaps = {
+    "🌌 CartoDB Fundo Noturno (Padrão)": cartoLayer,
+    "📺 CartoDB HTTP (Smart TV Mode)": cartoHttpLayer,
+    "🗺️ Esri ArcGIS (Fundo Cinza)": esriLayer,
+    "🛣️ OpenStreetMap Clássico": osmLayer
+  };
+
+  var overlayMaps = {
+    "🛰️ OpenAIP Espaços & Aerovias (Global)": openaipLayer,
+    "🇧🇷 DECEA Aerovias Inferiores (ERC L)": deceaLowLayer,
+    "🇧🇷 DECEA Aerovias Superiores (ERC H)": deceaHighLayer,
+    "🚁 DECEA REHA (Helicópteros SP/RJ/BR)": deceaRehaLayer,
+    "🗺️ DECEA Cartas Visuais (WAC)": deceaWacLayer
+  };
+
+  L.control.layers(baseMaps, overlayMaps, { position: 'bottomleft', collapsed: false }).addTo(map);
+
   // Roteador de Fallback Automático via evento tileerror do Leaflet!!!
   cartoLayer.on('tileerror', function(err) {
     console.warn('[Radar] CartoDB Primario falhou. Alternando instantaneamente para CartoDB HTTP puro (Smart TV Mode)...', err);
