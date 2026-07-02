@@ -760,58 +760,14 @@ function buildIcon(d, selected) {
    ========================================================= */
 function popupSvg(cat, d) {
   var c  = CAT_C[cat]  || '#aaa';
-  var dk = isDark(d);
-  
-  var genericSvg = '';
-  if (cat === 'airliner') {
-      genericSvg = svgAirliner(c, dk);
-  } else if (cat === 'helicopter') {
-      var hInfo = getHeliInfo(d || {});
-      var svgFn = hInfo.size === 'heavy' ? svgHeliHeavy : (hInfo.size === 'medium' ? svgHeliMedium : svgHeliLight);
-      genericSvg = svgFn(c, dk);
-  } else {
-      genericSvg = svgSmall(c, dk);
+  var dk = CAT_DK[cat] || '#777';
+  if (cat === 'airliner')   return '<div class="pu-icon">'+svgAirliner(c, dk)+'</div>';
+  if (cat === 'helicopter') {
+    var hInfo = getHeliInfo(d || {});
+    var svgFn = hInfo.size === 'heavy' ? svgHeliHeavy : (hInfo.size === 'medium' ? svgHeliMedium : svgHeliLight);
+    return '<div class="pu-icon">'+svgFn(c, dk)+'</div>';
   }
-
-  var ic = d.icao24;
-  var def = '<div class="pu-icon" id="puic_'+ic+'" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;">'+genericSvg+'</div>';
-  
-  if (!ic) return def;
-  if (!window._pCache) window._pCache = {};
-  
-  var state = window._pCache[ic];
-  if (state === 'err' || state === 'nf') return def;
-  
-  if (state && state.indexOf('http') === 0) {
-    return '<div class="pu-icon" id="puic_'+ic+'" style="width:58px;height:40px;border-radius:4px;overflow:hidden;border:1px solid rgba(0,212,255,0.4);box-shadow:0 0 8px rgba(0,212,255,0.2);flex-shrink:0;">'
-         + '<img src="'+state+'" style="width:100%;height:100%;object-fit:cover;display:block;"></div>';
-  }
-  
-  if (!state) {
-    window._pCache[ic] = 'fetch';
-    fetch('https://api.planespotters.net/pub/photos/hex/' + ic)
-      .then(function(r){ return r.json(); })
-      .then(function(data){
-        if(data && data.photos && data.photos.length > 0) {
-          var src = data.photos[0].thumbnail_large.src;
-          window._pCache[ic] = src;
-          var el = document.getElementById('puic_'+ic);
-          if (el) {
-            el.style.width = '58px';
-            el.style.height = '40px';
-            el.style.borderRadius = '4px';
-            el.style.overflow = 'hidden';
-            el.style.border = '1px solid rgba(0,212,255,0.4)';
-            el.style.boxShadow = '0 0 8px rgba(0,212,255,0.2)';
-            el.innerHTML = '<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;display:block;animation:fadeIn 0.3s ease;">';
-          }
-        } else {
-          window._pCache[ic] = 'nf';
-        }
-      })
-      .catch(function(){ window._pCache[ic] = 'err'; });
-  }
-  return def;
+  return '<div class="pu-icon" style="width:28px">'+svgSmall(c, dk)+'</div>';
 }
 
 var CAT_LABEL = { airliner:'Aviação Comercial', helicopter:'Helicóptero', small:'Aviação Geral' };
