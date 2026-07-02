@@ -1201,20 +1201,18 @@ function fetchAircraft() {
   console.log('[Radar] Executando busca v4.0 (Multi-Mirrors de Alta Velocidade & JSONP Tunnel)...');
   setStatus('loading', 'Atualizando...');
   var openskyUrl = 'https://opensky-network.org/api/states/all?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax;
-  // Fallback para as rotas globais estáticas /ladd (muito mais tolerantes a quedas dos backends)
-  var airplanesLiveUrl = 'https://api.airplanes.live/v2/ladd';
-  var adsbOneUrl = 'https://api.adsb.one/v2/ladd';
-  var adsbLolUrl = 'https://api.adsb.lol/v2/ladd';
-  var adsbFiUrl = 'https://api.adsb.fi/v2/ladd';
+  var adsbLolUrl = 'https://api.adsb.lol/v2/lat/-14/lon/-53/dist/2000'; // Raio de 2000 NM (cobre todo o Brasil)
+  var airplanesLiveUrl = 'https://api.airplanes.live/v2/lat/-14/lon/-53/dist/2000';
+  var adsbOneUrl = 'https://api.adsb.one/v2/lat/-14/lon/-53/dist/2000';
 
   var reqs = [
-    { type: 'adsblol',       url: adsbFiUrl }, // 1. ADSB.fi (Totalmente independente, 100% uptime)
-    { type: 'adsblol',       url: airplanesLiveUrl }, // 2. Airplanes.live (Ultraveloz)
-    { type: 'adsblol',       url: adsbOneUrl },       // 3. ADSB.one (Mirror global)
-    { type: 'adsblol',       url: 'https://radar-aereo-okfly.onrender.com/api/adsblol' }, // 4. Nosso proxy Render com Cache
-    { type: 'adsblol',       url: adsbLolUrl }, // 5. ADSB.lol direto
-    { type: 'jsonp_adsblol', url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(adsbFiUrl) }, // 6. AllOrigins wrapper FI
-    { type: 'jsonp_adsblol', url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(airplanesLiveUrl) }, // 7. AllOrigins wrapper Airplanes
+    { type: 'adsblol',       url: airplanesLiveUrl }, // 1. Airplanes.live (Ultraveloz e estavel, sem bloqueio CORS)
+    { type: 'adsblol',       url: adsbOneUrl },       // 2. ADSB.one (Mirror estavel global)
+    { type: 'adsblol',       url: 'https://radar-aereo-okfly.onrender.com/api/adsblol' }, // 3. Nosso proxy Render com Cache
+    { type: 'adsblol',       url: adsbLolUrl }, // 4. ADSB.lol direto
+    { type: 'jsonp_adsblol', url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(airplanesLiveUrl) }, // 5. AllOrigins wrapper Airplanes
+    { type: 'jsonp_adsblol', url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(adsbLolUrl) },       // 6. AllOrigins wrapper ADSB.lol
+    { type: 'adsblol',       url: 'https://corsproxy.io/?' + encodeURIComponent(airplanesLiveUrl) }, // 7. Corsproxy Airplanes
     { type: 'raw',           url: openskyUrl },
     { type: 'raw',           url: 'https://radar-aereo-okfly.onrender.com/api/opensky?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin + '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax },
     { type: 'jsonp',         url: 'https://api.allorigins.win/get?url=' + encodeURIComponent(openskyUrl) }
@@ -1262,11 +1260,7 @@ function fetchAircraft() {
           vertical_rate:  s.baro_rate != null ? s.baro_rate : null, // Mantém original em ft/min
           geo_altitude:   s.alt_geom != null ? (s.alt_geom / 3.281) : null
         };
-      }).filter(function(d){ 
-        return d.latitude != null && d.longitude != null &&
-               d.latitude >= BBOX.lamin && d.latitude <= BBOX.lamax &&
-               d.longitude >= BBOX.lomin && d.longitude <= BBOX.lomax; 
-      });
+      }).filter(function(d){ return d.latitude != null && d.longitude != null; });
     } else {
       parsed = data.list.map(function(s){
         return {
@@ -1282,11 +1276,7 @@ function fetchAircraft() {
           vertical_rate:  s[11] != null ? Math.round(s[11] * 196.85) : null, // Converte m/s para ft/min
           geo_altitude:   s[13]
         };
-      }).filter(function(d){ 
-        return d.latitude != null && d.longitude != null &&
-               d.latitude >= BBOX.lamin && d.latitude <= BBOX.lamax &&
-               d.longitude >= BBOX.lomin && d.longitude <= BBOX.lomax; 
-      });
+      }).filter(function(d){ return d.latitude != null && d.longitude != null; });
     }
 
     parsed.forEach(function(d) {
