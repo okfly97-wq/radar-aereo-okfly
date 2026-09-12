@@ -740,8 +740,8 @@ function buildIcon(d, selected) {
   }
   var svg = svgFn(c, dk);
 
-  var w = cat === 'small' ? 28 : (cat === 'helicopter' && getHeliInfo(d).size === 'heavy' ? 34 : 32);
-  var h = cat === 'helicopter' && getHeliInfo(d).size === 'heavy' ? 34 : 32;
+  var w = cat === 'small' ? 14 : (cat === 'helicopter' && getHeliInfo(d).size === 'heavy' ? 17 : 16);
+  var h = cat === 'helicopter' && getHeliInfo(d).size === 'heavy' ? 17 : 16;
   var html = '<div style="width:'+w+'px;height:'+h+'px;transform:rotate('+hdg+'deg);'
            + 'transform-origin:center;filter:'+dropShadow+'">' + svg + '</div>';
 
@@ -750,7 +750,7 @@ function buildIcon(d, selected) {
     html: html,
     iconSize:    [w, h],
     iconAnchor:  [w/2, h/2],
-    popupAnchor: [0, -22],
+    popupAnchor: [0, -12],
     tooltipAnchor: [w/2+2, 0]
   });
 }
