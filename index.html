@@ -601,15 +601,25 @@ function getHeliMatch(d) {
 }
 
 function categorize(d) {
+  var cs  = (d.callsign || '').trim().toUpperCase();
+  var info = (d.origin_country || '').toUpperCase(); // Ex: "PR-MYM (A319)"
+  var fullStr = cs + ' ' + info;
+
+  // 1. Trava Absoluta de Asa Fixa (Jatos Comerciais / Regionais) baseada na Matrícula / Tipo (Evita A319 virar helicóptero no chão)
+  if (/A31|A32|A33|A34|A35|A38|B73|B74|B75|B76|B77|B78|E19|E17|E29|ATR|C208|AT7|AT4|ERJ|CRJ/.test(fullStr)) return 'airliner';
+  if (AIRLINE_RE.test(cs)) return 'airliner';
+
+  // 2. Deteção Explícita de Modelos de Helicóptero
   if (getHeliMatch(d) != null) return 'helicopter';
   
-  var cs  = (d.callsign || '').trim().toUpperCase();
+  // 3. Fallbacks e Heurísticas de Dinâmica de Voo
   var vel = d.velocity || 0;
   var alt = (d.geo_altitude != null ? d.geo_altitude : d.baro_altitude) || 0;
-  if (!d.on_ground && vel < 35 && alt < 900)  return 'helicopter';
-  if (!d.on_ground && vel < 18)                return 'helicopter';
-  if (AIRLINE_RE.test(cs))                     return 'airliner';
-  if (vel > 145 && alt > 5500)                 return 'airliner';
+  
+  // Se está no ar, muito devagar, provavelmente é helicóptero (desde que não seja jato comercial travado acima)
+  if (!d.on_ground && vel > 0 && vel < 35 && alt < 1200) return 'helicopter';
+  
+  if (vel > 145 && alt > 5500) return 'airliner';
   return 'small';
 }
 
