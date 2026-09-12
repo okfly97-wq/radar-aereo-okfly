@@ -836,18 +836,34 @@ function addHist(icao24, lat, lng) {
 
 function showTrack(icao24) {
   var h = posHist[icao24];
-  if (!h || h.length < 2) return;
-  var lls = h.map(function(p){ return [p.lat, p.lng]; });
+  var localLls = h && h.length >= 2 ? h.map(function(p){ return [p.lat, p.lng]; }) : [];
+  
   if (trackLines[icao24]) {
-    trackLines[icao24].setLatLngs(lls);
+    if (localLls.length) trackLines[icao24].setLatLngs(localLls);
   } else {
-    trackLines[icao24] = L.polyline(lls, {
-      color:'#00d4ff', weight:2.2, opacity:.72,
-      dashArray:'9 6'
+    // Linha pontilhada estilizada com as cores da OK FLY (Dourado/Amarelo)
+    trackLines[icao24] = L.polyline(localLls, {
+      color:'#ffb300', weight:2.8, opacity:0.85,
+      dashArray:'3 8', lineCap:'round', lineJoin:'round'
     }).addTo(map);
-    // Bring track below markers
     trackLines[icao24].bringToBack();
   }
+
+  // Busca o histórico global completo da aeronave desde a decolagem (Trace)
+  fetch('https://api.airplanes.live/v2/trace/' + icao24)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data && data.trace && data.trace.length > 0) {
+        var traceLls = data.trace.map(function(t) {
+           return [t[1], t[2]]; // [1] = lat, [2] = lon
+        }).filter(function(p){ return p[0] != null && p[1] != null; });
+        
+        // Se a linha pontilhada ainda estiver ativa na tela, injeta a rota inteira!
+        if (trackLines[icao24]) {
+          trackLines[icao24].setLatLngs(traceLls);
+        }
+      }
+    }).catch(function(e){ console.warn('[Radar] Erro ao buscar trace histórico completo', e); });
 }
 
 function hideTrack(icao24) {
