@@ -104,8 +104,8 @@ body.hide-reha-labels .airway-label-reha, body.hide-rea-labels .airway-label-rea
 .ph-l{display:flex;align-items:center;gap:5px}
 .ph-l::before{content:'';width:3px;height:12px;border-radius:2px;
   background:linear-gradient(180deg,var(--cyan),var(--blue));display:block}
-.ph-title{font-size:8.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
-.ph-cnt{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--cyan);
+.ph-title{font-size:6px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.ph-cnt{font-family:'JetBrains Mono',monospace;font-size:7.5px;color:var(--cyan);
   background:rgba(0,212,255,.08);padding:2px 5px;border-radius:9px;border:1px solid rgba(0,212,255,.18)}
 
 /* Cycle progress bar */
@@ -113,10 +113,18 @@ body.hide-reha-labels .airway-label-reha, body.hide-rea-labels .airway-label-rea
 #cpbar{height:100%;width:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));
   transform-origin:left;transform:scaleX(0);transition:none;opacity:.75}
 
-/* List */
-#aclist{overflow-y:auto;flex:1;min-height:0}
-#aclist::-webkit-scrollbar{width:3px}
-#aclist::-webkit-scrollbar-track{background:transparent}
+/* Search bar */
+.s-box{padding:7px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--panel)}
+.s-inp{width:100%;background:rgba(4,10,22,.6);border:1px solid rgba(0,212,255,.15);
+  color:#f0f5fa;padding:5px 8px 5px 22px;border-radius:6px;font-size:8px;outline:none;
+  background-image:url('data:image/svg+xml;utf8,<svg fill="%23607080" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>');
+  background-repeat:no-repeat;background-position:6px center;background-size:10px}
+.s-inp::placeholder{color:var(--muted)}
+.s-inp:focus{border-color:var(--cyan);box-shadow:0 0 8px rgba(0,212,255,.2)}
+
+#aclist{flex-grow:1;overflow-y:auto;overflow-x:hidden}
+#aclist::-webkit-scrollbar{width:4px}
+#aclist::-webkit-scrollbar-track{background:rgba(0,0,0,.15)}
 #aclist::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 
 .aci{
@@ -1461,14 +1469,9 @@ var weatherLayer = null;
 
 function checkWeatherLayer() {
   if (!weatherLayer) return;
-  var z = map.getZoom();
-  // Se o zoom for maior que 6 (a partir do 4º clique na Smart TV / Widescreen), remove a camada meteorologica do DOM
-  if (z > 6) {
-    if (map.hasLayer(weatherLayer)) map.removeLayer(weatherLayer);
-  } else {
-    if (!map.hasLayer(weatherLayer)) map.addLayer(weatherLayer);
-  }
+  if (!map.hasLayer(weatherLayer)) map.addLayer(weatherLayer);
 }
+// Mapa fixo: não atrelar a verificação de remoção ao evento zoomend.
 
 function initWeatherLayer() {
   console.log('[Radar] Buscando dados de radar meteorologico (REDEMET / RainViewer)...');
@@ -1484,8 +1487,8 @@ function initWeatherLayer() {
       if (weatherLayer && map.hasLayer(weatherLayer)) map.removeLayer(weatherLayer);
       weatherLayer = L.tileLayer(tileUrl, {
         opacity: 0.55, // Transparencia elegante de 55% para nao ofuscar as aeronaves
-        maxNativeZoom: 6, // Evita requisicoes sem cobertura
-        maxZoom: 6,       // Esconde a camada apos o 4º clique (Zoom > 6)
+        maxNativeZoom: 13, // Estica os pixels das nuvens permitindo zooms imensos
+        maxZoom: 18,       // Mapa nunca desaparece!
         attribution: '&copy; RainViewer / REDEMET'
       });
       checkWeatherLayer();
