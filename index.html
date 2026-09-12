@@ -904,9 +904,13 @@ function selectAircraft(icao24, isAuto) {
   // Show trajectory
   showTrack(icao24);
 
-  // Fly/pan to aircraft
+  // Fly/pan to aircraft (Efeito Drone / Cinematic)
   var latlng = entry.marker.getLatLng();
-  map.panTo(latlng, { animate:true, duration:0.7 });
+  if (isAuto) {
+    map.flyTo(latlng, map.getZoom(), { animate:true, duration:1.5 });
+  } else {
+    map.setView(latlng, map.getZoom(), { animate:true });
+  }
 
   // Open popup
   entry.marker.openPopup();
@@ -1155,6 +1159,11 @@ window._tvJsonpCallback = function(json) {
         var distDiff = Math.sqrt(dLat * dLat + dLng * dLng) * 111132;
         if (d.on_ground || distDiff > 600) { e.currentLat = d.latitude; e.currentLng = d.longitude; e.marker.setLatLng(latlng); }
         else { e.currentLat = (e.currentLat * 0.75) + (d.latitude * 0.25); e.currentLng = (e.currentLng * 0.75) + (d.longitude * 0.25); }
+        
+        // Câmera Perseguição: Se essa aeronave está selecionada (Radar Lock), a tela acompanha seu voo!
+        if (id === selIcao) {
+           map.panTo([e.currentLat, e.currentLng], { animate: false });
+        }
       }
       e.marker.setIcon(icon); e.marker.setPopupContent(buildPopup(d)); e.marker.setTooltipContent(buildTooltip(d));
     } else {
