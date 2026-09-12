@@ -799,6 +799,8 @@ function buildPopup(d) {
     + '<div><div class="pu-cs">' + cs + '</div>'
     + '<div class="pu-type">' + (CAT_LABEL[cat] || 'Aeronave') + '</div></div></div>'
     + heliRows
+    + row('Origem',    '<span style="color:#607080;font-size:10px;font-style:italic">Oculto via ADS-B</span>', '')
+    + row('Destino',   '<span style="color:#607080;font-size:10px;font-style:italic">Oculto via ADS-B</span>', '')
     + row('Matrícula', d.origin_country || 'N/A', '')
     + row('Status',    gnd, 'a')
     + row('Altitude',  altFt + ' / ' + altM, 'g')
