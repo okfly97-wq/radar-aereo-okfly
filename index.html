@@ -359,24 +359,24 @@ try {
   }
   map = L.map('map', { center:CENTER, zoom:ZOOM, zoomControl:true, attributionControl:true });
   // =========================================================
-  // BASEMAP: CartoDB Dark Matter (Fundo Escuro Nativo / Brasil com S)
+  // BASEMAP: Esri World Dark Gray Base (Fundo Escuro Premium / Sem limites e sem API Key)
   // =========================================================
-  var cartoLayer = L.tileLayer('//basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
-    attribution: '&copy; CARTO &copy; OpenStreetMap',
-    maxZoom: 19, crossOrigin: false
+  var baseLayer = L.tileLayer('//server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+    maxZoom: 16, crossOrigin: false
   }).addTo(map);
 
   // FALLBACK HTTP para Smart TVs antigas
-  var cartoHttpLayer = L.tileLayer('http://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
-    attribution: '&copy; CARTO &copy; OpenStreetMap HTTP',
-    maxZoom: 19, crossOrigin: false
+  var baseHttpLayer = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri (HTTP)',
+    maxZoom: 16, crossOrigin: false
   });
 
-  cartoLayer.on('tileerror', function(err) {
-    console.warn('[Radar] CartoDB falhou. Alternando para HTTP puro (Smart TV)...', err);
-    if (!map.hasLayer(cartoHttpLayer)) {
-      map.removeLayer(cartoLayer);
-      cartoHttpLayer.addTo(map);
+  baseLayer.on('tileerror', function(err) {
+    console.warn('[Radar] Servidor de tiles falhou em HTTPS. Alternando para HTTP puro (Smart TV)...', err);
+    if (!map.hasLayer(baseHttpLayer)) {
+      map.removeLayer(baseLayer);
+      baseHttpLayer.addTo(map);
     }
   });
 
